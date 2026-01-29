@@ -22,7 +22,7 @@ android {
         }
 
         // 后端 API 地址 - 开发时用本机 IP
-        buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:9527/\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://20.221.72.222:9527/\"")
     }
 
     buildTypes {

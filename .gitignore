@@ -27,3 +27,5 @@ nohup.out
 
 # Uploads
 uploads/
+
+*.hprof
