@@ -38,6 +38,10 @@ public class TradeRequest {
     @Enumerated(EnumType.STRING)
     private TradeStatus status = TradeStatus.PENDING;
 
+    // 双方确认完成
+    private Boolean requesterConfirmed = false;  // 发起方确认
+    private Boolean targetConfirmed = false;     // 接收方确认
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 

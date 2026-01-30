@@ -98,10 +98,29 @@ public class TradeService {
                 if (currentStatus != TradeRequest.TradeStatus.ACCEPTED) {
                     throw new RuntimeException("只有已接受的请求才能完成");
                 }
-                // 将物品标记为已交换
-                tradeRequest.getTargetItem().setStatus(Item.ItemStatus.TRADED);
-                tradeRequest.getOfferedItem().setStatus(Item.ItemStatus.TRADED);
-                break;
+                // 记录谁确认了
+                if (isRequester) {
+                    if (tradeRequest.getRequesterConfirmed()) {
+                        throw new RuntimeException("您已确认过了");
+                    }
+                    tradeRequest.setRequesterConfirmed(true);
+                } else if (isTargetOwner) {
+                    if (tradeRequest.getTargetConfirmed()) {
+                        throw new RuntimeException("您已确认过了");
+                    }
+                    tradeRequest.setTargetConfirmed(true);
+                }
+                
+                // 双方都确认了才真正完成
+                if (tradeRequest.getRequesterConfirmed() && tradeRequest.getTargetConfirmed()) {
+                    // 将物品标记为已交换
+                    tradeRequest.getTargetItem().setStatus(Item.ItemStatus.TRADED);
+                    tradeRequest.getOfferedItem().setStatus(Item.ItemStatus.TRADED);
+                    tradeRequest.setStatus(TradeRequest.TradeStatus.COMPLETED);
+                }
+                tradeRequest.setUpdatedAt(LocalDateTime.now());
+                tradeRequest = tradeRequestRepository.save(tradeRequest);
+                return toTradeResponse(tradeRequest);  // 提前返回，不改变状态
 
             case CANCELLED:
                 if (!isRequester || currentStatus != TradeRequest.TradeStatus.PENDING) {
@@ -152,6 +171,8 @@ public class TradeService {
         response.setRequester(itemService.toUserBrief(tradeRequest.getRequester()));
         response.setMessage(tradeRequest.getMessage());
         response.setStatus(tradeRequest.getStatus());
+        response.setRequesterConfirmed(tradeRequest.getRequesterConfirmed());
+        response.setTargetConfirmed(tradeRequest.getTargetConfirmed());
         response.setCreatedAt(tradeRequest.getCreatedAt());
         return response;
     }

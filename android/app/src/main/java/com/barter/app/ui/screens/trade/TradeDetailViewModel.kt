@@ -26,6 +26,10 @@ data class TradeDetailUiState(
     val offeredItemImage: String? = null,
     val offeredOwnerName: String? = null,
     val canRespond: Boolean = false,
+    val isRequester: Boolean = false,
+    val requesterConfirmed: Boolean = false,
+    val targetConfirmed: Boolean = false,
+    val myConfirmed: Boolean = false,  // 当前用户是否已确认
     val isActioning: Boolean = false,
     val isActionSuccess: Boolean = false,
     val actionError: String? = null
@@ -54,6 +58,10 @@ class TradeDetailViewModel @Inject constructor(
                     val trade = result.data
                     // 判断是否是收到的请求（对方是发起者）
                     val canRespond = trade.targetItem?.owner?.id == currentUserId
+                    val isRequester = trade.requester.id == currentUserId
+                    
+                    // 判断当前用户是否已确认
+                    val myConfirmed = if (isRequester) trade.requesterConfirmed else trade.targetConfirmed
                     
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
@@ -65,7 +73,11 @@ class TradeDetailViewModel @Inject constructor(
                         offeredItemTitle = trade.offeredItem?.title,
                         offeredItemImage = trade.offeredItem?.coverImage,
                         offeredOwnerName = trade.offeredItem?.owner?.nickname ?: trade.offeredItem?.owner?.username,
-                        canRespond = canRespond
+                        canRespond = canRespond,
+                        isRequester = isRequester,
+                        requesterConfirmed = trade.requesterConfirmed,
+                        targetConfirmed = trade.targetConfirmed,
+                        myConfirmed = myConfirmed
                     )
                 }
                 is Result.Error -> {

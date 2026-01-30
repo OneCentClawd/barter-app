@@ -26,6 +26,8 @@ public class TradeDto {
         private ItemDto.UserBrief requester;
         private String message;
         private TradeRequest.TradeStatus status;
+        private Boolean requesterConfirmed;
+        private Boolean targetConfirmed;
         private LocalDateTime createdAt;
     }
 

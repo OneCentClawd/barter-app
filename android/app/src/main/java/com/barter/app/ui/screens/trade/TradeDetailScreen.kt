@@ -8,6 +8,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -187,17 +189,44 @@ fun TradeDetailScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "交换已达成，请在完成线下交换后点击确认",
+                                text = "交换已达成，请在完成线下交换后双方都确认",
                                 fontSize = 14.sp,
                                 color = Color(0xFFE65100)
                             )
+                            
                             Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = { viewModel.completeTrade() },
+                            
+                            // 显示双方确认状态
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                enabled = !uiState.isActioning
+                                horizontalArrangement = Arrangement.SpaceEvenly
                             ) {
-                                Text("确认完成交换")
+                                ConfirmStatusChip(
+                                    label = if (uiState.isRequester) "我" else "对方",
+                                    confirmed = uiState.requesterConfirmed
+                                )
+                                ConfirmStatusChip(
+                                    label = if (uiState.isRequester) "对方" else "我",
+                                    confirmed = uiState.targetConfirmed
+                                )
+                            }
+                            
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            if (uiState.myConfirmed) {
+                                Text(
+                                    text = "您已确认，等待对方确认",
+                                    fontSize = 13.sp,
+                                    color = Color(0xFF4CAF50)
+                                )
+                            } else {
+                                Button(
+                                    onClick = { viewModel.completeTrade() },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !uiState.isActioning
+                                ) {
+                                    Text("确认完成交换")
+                                }
                             }
                         }
                     }
@@ -213,6 +242,29 @@ fun TradeDetailScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ConfirmStatusChip(
+    label: String,
+    confirmed: Boolean
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(
+            imageVector = if (confirmed) Icons.Default.Check else Icons.Default.Schedule,
+            contentDescription = null,
+            modifier = Modifier.size(18.dp),
+            tint = if (confirmed) Color(0xFF4CAF50) else Color.Gray
+        )
+        Text(
+            text = "$label: ${if (confirmed) "已确认" else "待确认"}",
+            fontSize = 13.sp,
+            color = if (confirmed) Color(0xFF4CAF50) else Color.Gray
+        )
     }
 }
 

@@ -145,6 +145,8 @@ data class TradeRequest(
     val requester: UserBrief,
     val message: String?,
     val status: TradeStatus,
+    val requesterConfirmed: Boolean = false,
+    val targetConfirmed: Boolean = false,
     val createdAt: String?
 )
 
