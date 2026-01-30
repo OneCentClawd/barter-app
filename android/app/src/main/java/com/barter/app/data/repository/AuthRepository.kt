@@ -36,11 +36,17 @@ class AuthRepository @Inject constructor(
                 )
                 Result.Success(data)
             } else {
-                val errorMsg = when (response.code()) {
-                    400 -> "用户名或密码错误"
-                    401 -> "用户名或密码错误"
-                    404 -> "用户不存在"
-                    else -> response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "登录失败")
+                // 优先使用后端返回的错误信息
+                val serverMessage = response.body()?.message
+                val errorMsg = if (!serverMessage.isNullOrBlank()) {
+                    serverMessage
+                } else {
+                    when (response.code()) {
+                        400, 401 -> "用户名或密码错误"
+                        404 -> "用户不存在"
+                        500 -> "服务器错误，请稍后重试"
+                        else -> "登录失败"
+                    }
                 }
                 Result.Error(errorMsg)
             }
@@ -51,7 +57,7 @@ class AuthRepository @Inject constructor(
         } catch (e: ConnectException) {
             Result.Error("连接失败，请检查网络或服务器状态")
         } catch (e: Exception) {
-            Result.Error("登录失败: ${e.message ?: "未知错误"}")
+            Result.Error("用户名或密码错误")
         }
     }
 
