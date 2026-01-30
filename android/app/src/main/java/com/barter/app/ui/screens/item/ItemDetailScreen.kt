@@ -1,5 +1,6 @@
 package com.barter.app.ui.screens.item
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -26,7 +27,7 @@ import com.barter.app.BuildConfig
 import com.barter.app.ui.screens.main.home.getConditionColor
 import com.barter.app.ui.screens.main.home.getConditionText
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ItemDetailScreen(
     itemId: Long,
