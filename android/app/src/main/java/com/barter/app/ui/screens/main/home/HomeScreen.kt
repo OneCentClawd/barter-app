@@ -114,6 +114,9 @@ fun ItemCard(
     item: ItemListItem,
     onClick: () -> Unit
 ) {
+    val isTraded = item.status == ItemStatus.TRADED
+    val isPending = item.status == ItemStatus.PENDING
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -150,6 +153,23 @@ fun ItemCard(
                     }
                 }
 
+                // 已交换/交易中遮罩
+                if (isTraded || isPending) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.5f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = if (isTraded) "已交换" else "交易中",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                    }
+                }
+
                 // 成色标签
                 Box(
                     modifier = Modifier
@@ -165,6 +185,27 @@ fun ItemCard(
                         fontSize = 10.sp
                     )
                 }
+                
+                // 状态标签（左上角）
+                if (isTraded || isPending) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                if (isTraded) Color(0xFF9E9E9E) 
+                                else Color(0xFFFF9800)
+                            )
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (isTraded) "已交换" else "交易中",
+                            color = Color.White,
+                            fontSize = 10.sp
+                        )
+                    }
+                }
             }
 
             // 信息
@@ -174,7 +215,8 @@ fun ItemCard(
                     fontWeight = FontWeight.Medium,
                     fontSize = 14.sp,
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isTraded) Color.Gray else Color.Unspecified
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
