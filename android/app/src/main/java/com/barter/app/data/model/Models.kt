@@ -61,6 +61,27 @@ data class UpdateProfileRequest(
     val bio: String?
 )
 
+data class ChangePasswordRequest(
+    val oldPassword: String,
+    val newPassword: String
+)
+
+data class UserSettings(
+    val showPhoneToOthers: Boolean = true,
+    val allowStrangersMessage: Boolean = true,
+    val notifyNewMessage: Boolean = true,
+    val notifyTradeUpdate: Boolean = true,
+    val notifySystemAnnouncement: Boolean = true
+)
+
+data class UpdateSettingsRequest(
+    val showPhoneToOthers: Boolean? = null,
+    val allowStrangersMessage: Boolean? = null,
+    val notifyNewMessage: Boolean? = null,
+    val notifyTradeUpdate: Boolean? = null,
+    val notifySystemAnnouncement: Boolean? = null
+)
+
 // 物品
 enum class ItemCondition {
     NEW, LIKE_NEW, GOOD, FAIR, POOR

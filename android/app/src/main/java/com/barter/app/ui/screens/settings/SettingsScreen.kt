@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,21 +30,29 @@ fun SettingsScreen(
     onLogout: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsState()
     var showLogoutDialog by remember { mutableStateOf(false) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
     var showClearCacheDialog by remember { mutableStateOf(false) }
     
-    // 隐私设置状态
-    var showPhoneToOthers by remember { mutableStateOf(true) }
-    var allowStrangersMessage by remember { mutableStateOf(true) }
-    
-    // 通知设置状态
-    var notifyNewMessage by remember { mutableStateOf(true) }
-    var notifyTradeUpdate by remember { mutableStateOf(true) }
-    var notifySystemAnnouncement by remember { mutableStateOf(true) }
-    
     val context = LocalContext.current
+
+    // 处理密码修改结果
+    LaunchedEffect(uiState.passwordChangeResult) {
+        when (val result = uiState.passwordChangeResult) {
+            is PasswordChangeResult.Success -> {
+                Toast.makeText(context, "密码修改成功", Toast.LENGTH_SHORT).show()
+                showChangePasswordDialog = false
+                viewModel.clearPasswordChangeResult()
+            }
+            is PasswordChangeResult.Error -> {
+                Toast.makeText(context, result.message, Toast.LENGTH_SHORT).show()
+                viewModel.clearPasswordChangeResult()
+            }
+            null -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -78,16 +87,16 @@ fun SettingsScreen(
             
             SettingsSwitchItem(
                 title = "允许他人查看手机号",
-                checked = showPhoneToOthers,
-                onCheckedChange = { showPhoneToOthers = it }
+                checked = uiState.settings.showPhoneToOthers,
+                onCheckedChange = { viewModel.updateSetting(showPhoneToOthers = it) }
             )
             
             Divider()
             
             SettingsSwitchItem(
                 title = "允许陌生人私信",
-                checked = allowStrangersMessage,
-                onCheckedChange = { allowStrangersMessage = it }
+                checked = uiState.settings.allowStrangersMessage,
+                onCheckedChange = { viewModel.updateSetting(allowStrangersMessage = it) }
             )
             
             Divider()
@@ -97,24 +106,24 @@ fun SettingsScreen(
             
             SettingsSwitchItem(
                 title = "新消息通知",
-                checked = notifyNewMessage,
-                onCheckedChange = { notifyNewMessage = it }
+                checked = uiState.settings.notifyNewMessage,
+                onCheckedChange = { viewModel.updateSetting(notifyNewMessage = it) }
             )
             
             Divider()
             
             SettingsSwitchItem(
                 title = "交易状态更新",
-                checked = notifyTradeUpdate,
-                onCheckedChange = { notifyTradeUpdate = it }
+                checked = uiState.settings.notifyTradeUpdate,
+                onCheckedChange = { viewModel.updateSetting(notifyTradeUpdate = it) }
             )
             
             Divider()
             
             SettingsSwitchItem(
                 title = "系统公告",
-                checked = notifySystemAnnouncement,
-                onCheckedChange = { notifySystemAnnouncement = it }
+                checked = uiState.settings.notifySystemAnnouncement,
+                onCheckedChange = { viewModel.updateSetting(notifySystemAnnouncement = it) }
             )
             
             Divider()
@@ -199,19 +208,22 @@ fun SettingsScreen(
                         value = oldPassword,
                         onValueChange = { oldPassword = it },
                         label = { Text("当前密码") },
-                        singleLine = true
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
                     )
                     OutlinedTextField(
                         value = newPassword,
                         onValueChange = { newPassword = it },
                         label = { Text("新密码") },
-                        singleLine = true
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
                     )
                     OutlinedTextField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
                         label = { Text("确认新密码") },
-                        singleLine = true
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
                     )
                 }
             },
@@ -230,8 +242,6 @@ fun SettingsScreen(
                             }
                             else -> {
                                 viewModel.changePassword(oldPassword, newPassword)
-                                showChangePasswordDialog = false
-                                Toast.makeText(context, "密码修改成功", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

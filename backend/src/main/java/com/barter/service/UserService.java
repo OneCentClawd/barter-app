@@ -9,6 +9,7 @@ import com.barter.repository.TradeRequestRepository;
 import com.barter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final TradeRequestRepository tradeRequestRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -65,6 +67,46 @@ public class UserService {
         return toProfileResponse(user);
     }
 
+    @Transactional
+    public void changePassword(UserDto.ChangePasswordRequest request, User user) {
+        // 验证旧密码
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new RuntimeException("当前密码错误");
+        }
+        
+        // 设置新密码
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public UserDto.UserSettings updateSettings(UserDto.UpdateSettingsRequest request, User user) {
+        if (request.getShowPhoneToOthers() != null) {
+            user.setShowPhoneToOthers(request.getShowPhoneToOthers());
+        }
+        if (request.getAllowStrangersMessage() != null) {
+            user.setAllowStrangersMessage(request.getAllowStrangersMessage());
+        }
+        if (request.getNotifyNewMessage() != null) {
+            user.setNotifyNewMessage(request.getNotifyNewMessage());
+        }
+        if (request.getNotifyTradeUpdate() != null) {
+            user.setNotifyTradeUpdate(request.getNotifyTradeUpdate());
+        }
+        if (request.getNotifySystemAnnouncement() != null) {
+            user.setNotifySystemAnnouncement(request.getNotifySystemAnnouncement());
+        }
+        user.setUpdatedAt(LocalDateTime.now());
+        user = userRepository.save(user);
+        
+        return toUserSettings(user);
+    }
+
+    public UserDto.UserSettings getSettings(User user) {
+        return toUserSettings(user);
+    }
+
     private String saveAvatar(MultipartFile file) {
         try {
             String filename = "avatar_" + UUID.randomUUID().toString() + getExtension(file.getOriginalFilename());
@@ -95,6 +137,7 @@ public class UserService {
         response.setRating(user.getRating());
         response.setRatingCount(user.getRatingCount());
         response.setCreatedAt(user.getCreatedAt());
+        response.setSettings(toUserSettings(user));
 
         // 统计
         long itemCount = itemRepository.findByOwner(user, org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
@@ -107,5 +150,15 @@ public class UserService {
         response.setTradeCount((int) tradeCount);
 
         return response;
+    }
+
+    private UserDto.UserSettings toUserSettings(User user) {
+        UserDto.UserSettings settings = new UserDto.UserSettings();
+        settings.setShowPhoneToOthers(user.getShowPhoneToOthers() != null ? user.getShowPhoneToOthers() : true);
+        settings.setAllowStrangersMessage(user.getAllowStrangersMessage() != null ? user.getAllowStrangersMessage() : true);
+        settings.setNotifyNewMessage(user.getNotifyNewMessage() != null ? user.getNotifyNewMessage() : true);
+        settings.setNotifyTradeUpdate(user.getNotifyTradeUpdate() != null ? user.getNotifyTradeUpdate() : true);
+        settings.setNotifySystemAnnouncement(user.getNotifySystemAnnouncement() != null ? user.getNotifySystemAnnouncement() : true);
+        return settings;
     }
 }

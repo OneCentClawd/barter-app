@@ -130,4 +130,65 @@ class UserRepository @Inject constructor(
             null
         }
     }
+
+    suspend fun changePassword(oldPassword: String, newPassword: String): Result<Unit> {
+        return try {
+            val response = apiService.changePassword(ChangePasswordRequest(oldPassword, newPassword))
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(Unit)
+            } else {
+                val errorMsg = when (response.code()) {
+                    400 -> response.body()?.message ?: "当前密码错误"
+                    else -> response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "修改密码失败")
+                }
+                Result.Error(errorMsg)
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("修改密码失败: ${e.message ?: "未知错误"}")
+        }
+    }
+
+    suspend fun getSettings(): Result<UserSettings> {
+        return try {
+            val response = apiService.getSettings()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data!!)
+            } else {
+                Result.Error(response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "获取设置失败"))
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("获取设置失败: ${e.message ?: "未知错误"}")
+        }
+    }
+
+    suspend fun updateSettings(request: UpdateSettingsRequest): Result<UserSettings> {
+        return try {
+            val response = apiService.updateSettings(request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data!!)
+            } else {
+                Result.Error(response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "更新设置失败"))
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("更新设置失败: ${e.message ?: "未知错误"}")
+        }
+    }
 }

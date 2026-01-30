@@ -40,4 +40,24 @@ public class UserController {
             @AuthenticationPrincipal User user) {
         return ApiResponse.success("头像更新成功", userService.updateAvatar(file, user));
     }
+
+    @PostMapping("/me/password")
+    public ApiResponse<Void> changePassword(
+            @Valid @RequestBody UserDto.ChangePasswordRequest request,
+            @AuthenticationPrincipal User user) {
+        userService.changePassword(request, user);
+        return ApiResponse.success("密码修改成功", null);
+    }
+
+    @GetMapping("/me/settings")
+    public ApiResponse<UserDto.UserSettings> getSettings(@AuthenticationPrincipal User user) {
+        return ApiResponse.success(userService.getSettings(user));
+    }
+
+    @PutMapping("/me/settings")
+    public ApiResponse<UserDto.UserSettings> updateSettings(
+            @RequestBody UserDto.UpdateSettingsRequest request,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success("设置更新成功", userService.updateSettings(request, user));
+    }
 }

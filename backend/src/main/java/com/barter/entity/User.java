@@ -43,6 +43,13 @@ public class User {
     private Double rating = 5.0;
     private Integer ratingCount = 0;
 
+    // 用户设置
+    private Boolean showPhoneToOthers = true;
+    private Boolean allowStrangersMessage = true;
+    private Boolean notifyNewMessage = true;
+    private Boolean notifyTradeUpdate = true;
+    private Boolean notifySystemAnnouncement = true;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 

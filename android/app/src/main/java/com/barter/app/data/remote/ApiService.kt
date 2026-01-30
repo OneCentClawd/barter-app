@@ -29,6 +29,15 @@ interface ApiService {
     @POST("api/users/me/avatar")
     suspend fun updateAvatar(@Part avatar: MultipartBody.Part): Response<ApiResponse<User>>
 
+    @POST("api/users/me/password")
+    suspend fun changePassword(@Body request: ChangePasswordRequest): Response<ApiResponse<Unit>>
+
+    @GET("api/users/me/settings")
+    suspend fun getSettings(): Response<ApiResponse<UserSettings>>
+
+    @PUT("api/users/me/settings")
+    suspend fun updateSettings(@Body request: UpdateSettingsRequest): Response<ApiResponse<UserSettings>>
+
     // ========== 物品 ==========
     @GET("api/items/list")
     suspend fun getItems(
