@@ -14,6 +14,8 @@ import com.barter.app.ui.screens.auth.LoginScreen
 import com.barter.app.ui.screens.auth.LoginViewModel
 import com.barter.app.ui.screens.auth.RegisterScreen
 import com.barter.app.ui.screens.auth.RegisterViewModel
+import com.barter.app.ui.screens.chat.ChatScreen
+import com.barter.app.ui.screens.chat.NewChatScreen
 import com.barter.app.ui.screens.item.CreateItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
@@ -181,6 +183,30 @@ fun BarterNavGraph() {
                         popUpTo(Screen.Main.route) { inclusive = true }
                     }
                 }
+            )
+        }
+
+        // 聊天（已有会话）
+        composable(
+            route = Screen.Chat.route,
+            arguments = listOf(navArgument("conversationId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: return@composable
+            ChatScreen(
+                conversationId = conversationId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 新聊天（通过用户ID开始）
+        composable(
+            route = Screen.NewChat.route,
+            arguments = listOf(navArgument("userId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
+            NewChatScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
