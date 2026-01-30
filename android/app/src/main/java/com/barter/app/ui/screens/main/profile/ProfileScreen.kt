@@ -31,7 +31,8 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onNavigateToItemDetail: (Long) -> Unit,
     onNavigateToLogin: () -> Unit,
-    onNavigateToEditProfile: () -> Unit
+    onNavigateToEditProfile: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -123,7 +124,7 @@ fun ProfileScreen(
                 ListItem(
                     headlineContent = { Text("设置") },
                     leadingContent = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    modifier = Modifier.clickable { }
+                    modifier = Modifier.clickable { onNavigateToSettings() }
                 )
                 Divider()
                 ListItem(

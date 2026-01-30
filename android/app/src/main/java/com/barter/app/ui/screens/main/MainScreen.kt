@@ -36,7 +36,8 @@ fun MainScreen(
     onNavigateToChat: (Long) -> Unit,
     onNavigateToTradeDetail: (Long) -> Unit,
     onNavigateToLogin: () -> Unit,
-    onNavigateToEditProfile: () -> Unit
+    onNavigateToEditProfile: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -111,7 +112,8 @@ fun MainScreen(
                 ProfileScreen(
                     onNavigateToItemDetail = onNavigateToItemDetail,
                     onNavigateToLogin = onNavigateToLogin,
-                    onNavigateToEditProfile = onNavigateToEditProfile
+                    onNavigateToEditProfile = onNavigateToEditProfile,
+                    onNavigateToSettings = onNavigateToSettings
                 )
             }
         }

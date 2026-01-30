@@ -17,6 +17,8 @@ import com.barter.app.ui.screens.auth.RegisterViewModel
 import com.barter.app.ui.screens.item.CreateItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
+import com.barter.app.ui.screens.profile.EditProfileScreen
+import com.barter.app.ui.screens.settings.SettingsScreen
 import com.barter.app.ui.screens.splash.SplashScreen
 import com.barter.app.ui.screens.trade.CreateTradeScreen
 
@@ -111,6 +113,9 @@ fun BarterNavGraph() {
                 },
                 onNavigateToEditProfile = {
                     navController.navigate(Screen.EditProfile.route)
+                },
+                onNavigateToSettings = {
+                    navController.navigate(Screen.Settings.route)
                 }
             )
         }
@@ -156,6 +161,25 @@ fun BarterNavGraph() {
                 onTradeCreated = {
                     navController.popBackStack()
                     navController.popBackStack()
+                }
+            )
+        }
+
+        // 编辑资料
+        composable(Screen.EditProfile.route) {
+            EditProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 设置
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Main.route) { inclusive = true }
+                    }
                 }
             )
         }
