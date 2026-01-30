@@ -21,8 +21,8 @@ android {
             useSupportLibrary = true
         }
 
-        // 后端 API 地址 - 使用 serveo 内网穿透
-        buildConfigField("String", "API_BASE_URL", "\"https://2805cda4c748776c-20-221-72-222.serveousercontent.com/\"")
+        // 后端 API 地址
+        buildConfigField("String", "API_BASE_URL", "\"http://20.221.72.222:9527/\"")
     }
 
     buildTypes {
