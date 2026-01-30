@@ -37,6 +37,7 @@ class AuthRepository @Inject constructor(
                 Result.Success(data)
             } else {
                 val errorMsg = when (response.code()) {
+                    400 -> "用户名或密码错误"
                     401 -> "用户名或密码错误"
                     404 -> "用户不存在"
                     else -> response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "登录失败")
