@@ -60,10 +60,10 @@ class TradeDetailViewModel @Inject constructor(
                         status = trade.status,
                         message = trade.message,
                         targetItemTitle = trade.targetItem?.title,
-                        targetItemImage = trade.targetItem?.images?.firstOrNull(),
+                        targetItemImage = trade.targetItem?.coverImage,
                         targetOwnerName = trade.targetItem?.owner?.nickname ?: trade.targetItem?.owner?.username,
                         offeredItemTitle = trade.offeredItem?.title,
-                        offeredItemImage = trade.offeredItem?.images?.firstOrNull(),
+                        offeredItemImage = trade.offeredItem?.coverImage,
                         offeredOwnerName = trade.offeredItem?.owner?.nickname ?: trade.offeredItem?.owner?.username,
                         canRespond = canRespond
                     )
