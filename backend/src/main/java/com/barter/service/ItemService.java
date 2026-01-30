@@ -5,6 +5,7 @@ import com.barter.entity.Item;
 import com.barter.entity.ItemImage;
 import com.barter.entity.User;
 import com.barter.repository.ItemRepository;
+import com.barter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -27,19 +28,24 @@ import java.util.stream.Collectors;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final UserRepository userRepository;
 
     @Value("${upload.path}")
     private String uploadPath;
 
     @Transactional
     public ItemDto.ItemResponse createItem(ItemDto.CreateRequest request, User owner, List<MultipartFile> images) {
+        // 重新从数据库加载 user 以避免 LazyInitializationException
+        User user = userRepository.findById(owner.getId())
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
         Item item = new Item();
         item.setTitle(request.getTitle());
         item.setDescription(request.getDescription());
         item.setCategory(request.getCategory());
         item.setCondition(request.getCondition());
         item.setWantedItems(request.getWantedItems());
-        item.setOwner(owner);
+        item.setOwner(user);
         item.setImages(new ArrayList<>());
 
         // 处理图片上传

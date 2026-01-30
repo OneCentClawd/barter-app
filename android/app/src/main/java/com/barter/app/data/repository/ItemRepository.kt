@@ -106,10 +106,23 @@ class ItemRepository @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.Success(response.body()!!.data!!)
             } else {
-                Result.Error(response.body()?.message ?: "发布物品失败")
+                val errorMsg = when (response.code()) {
+                    401 -> "登录已过期，请重新登录"
+                    403 -> "没有权限执行此操作"
+                    413 -> "图片太大，请压缩后重试"
+                    500 -> "服务器错误，请稍后重试"
+                    else -> response.body()?.message ?: "发布物品失败 (${response.code()})"
+                }
+                Result.Error(errorMsg)
             }
+        } catch (e: java.net.UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: java.net.SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: java.net.ConnectException) {
+            Result.Error("连接失败，服务器可能未启动")
         } catch (e: Exception) {
-            Result.Error(e.message ?: "网络错误")
+            Result.Error("发布失败: ${e.message ?: "未知错误"}")
         }
     }
 

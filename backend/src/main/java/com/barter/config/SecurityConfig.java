@@ -38,6 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/items/{id}").permitAll()
                 .requestMatchers("/api/items/search").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers("/error").permitAll()
                 // 其他需要认证
                 .anyRequest().authenticated()
             )

@@ -26,6 +26,9 @@ public class ItemController {
             @Valid @RequestPart("item") ItemDto.CreateRequest request,
             @RequestPart(value = "images", required = false) List<MultipartFile> images,
             @AuthenticationPrincipal User user) {
+        if (user == null) {
+            throw new RuntimeException("请先登录");
+        }
         return ApiResponse.success("物品发布成功", itemService.createItem(request, user, images));
     }
 
