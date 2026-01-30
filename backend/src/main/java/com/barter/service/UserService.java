@@ -69,15 +69,19 @@ public class UserService {
 
     @Transactional
     public void changePassword(UserDto.ChangePasswordRequest request, User user) {
+        // 重新从数据库获取用户，确保有密码字段
+        User dbUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
         // 验证旧密码
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), dbUser.getPassword())) {
             throw new RuntimeException("当前密码错误");
         }
         
         // 设置新密码
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        user.setUpdatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        dbUser.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        dbUser.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(dbUser);
     }
 
     @Transactional
