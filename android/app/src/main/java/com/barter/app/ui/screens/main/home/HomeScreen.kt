@@ -25,6 +25,7 @@ import coil.compose.AsyncImage
 import com.barter.app.BuildConfig
 import com.barter.app.data.model.ItemCondition
 import com.barter.app.data.model.ItemListItem
+import com.barter.app.data.model.ItemStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
