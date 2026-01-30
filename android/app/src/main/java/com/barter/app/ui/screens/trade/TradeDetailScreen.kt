@@ -172,6 +172,37 @@ fun TradeDetailScreen(
                     }
                 }
 
+                // 已接受的交易 - 显示确认完成按钮
+                if (uiState.status == TradeStatus.ACCEPTED) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFFF3E0)
+                        )
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "交换已达成，请在完成线下交换后点击确认",
+                                fontSize = 14.sp,
+                                color = Color(0xFFE65100)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = { viewModel.completeTrade() },
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !uiState.isActioning
+                            ) {
+                                Text("确认完成交换")
+                            }
+                        }
+                    }
+                }
+
                 // 错误提示
                 if (uiState.actionError != null) {
                     Text(

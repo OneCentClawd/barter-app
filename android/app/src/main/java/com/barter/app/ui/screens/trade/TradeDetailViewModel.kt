@@ -122,4 +122,26 @@ class TradeDetailViewModel @Inject constructor(
             }
         }
     }
+
+    fun completeTrade() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isActioning = true, actionError = null)
+            
+            when (val result = tradeRepository.updateTradeStatus(tradeId, TradeStatus.COMPLETED)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isActioning = false,
+                        isActionSuccess = true
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isActioning = false,
+                        actionError = result.message
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
 }
