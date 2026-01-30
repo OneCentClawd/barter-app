@@ -44,7 +44,7 @@ fun SettingsScreen(
                 onClick = { /* TODO */ }
             )
             
-            HorizontalDivider()
+            Divider()
             
             // 隐私设置
             SettingsItem(
@@ -52,7 +52,7 @@ fun SettingsScreen(
                 onClick = { /* TODO */ }
             )
             
-            HorizontalDivider()
+            Divider()
             
             // 通知设置
             SettingsItem(
@@ -60,7 +60,7 @@ fun SettingsScreen(
                 onClick = { /* TODO */ }
             )
             
-            HorizontalDivider()
+            Divider()
             
             // 清除缓存
             SettingsItem(
@@ -68,7 +68,7 @@ fun SettingsScreen(
                 onClick = { /* TODO */ }
             )
             
-            HorizontalDivider()
+            Divider()
             
             // 关于
             SettingsItem(
@@ -76,7 +76,7 @@ fun SettingsScreen(
                 onClick = { /* TODO */ }
             )
             
-            HorizontalDivider()
+            Divider()
             
             Spacer(modifier = Modifier.weight(1f))
             
