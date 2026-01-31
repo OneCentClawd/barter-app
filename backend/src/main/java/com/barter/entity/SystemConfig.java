@@ -21,4 +21,5 @@ public class SystemConfig {
 
     // 预定义的配置键
     public static final String ALLOW_USER_CHAT = "allow_user_chat";  // 是否允许用户之间聊天
+    public static final String ALLOW_USER_VIEW_ITEMS = "allow_user_view_items";  // 是否允许用户看到其他用户的物品
 }

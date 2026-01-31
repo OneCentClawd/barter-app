@@ -237,9 +237,14 @@ data class PageResponse<T>(
 
 // 管理员配置
 data class SystemConfigResponse(
-    val allowUserChat: Boolean
+    val allowUserChat: Boolean,
+    val allowUserViewItems: Boolean
 )
 
 data class AllowUserChatRequest(
+    val allow: Boolean
+)
+
+data class AllowRequest(
     val allow: Boolean
 )

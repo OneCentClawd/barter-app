@@ -141,5 +141,8 @@ interface ApiService {
     suspend fun getAdminConfig(): Response<ApiResponse<SystemConfigResponse>>
 
     @POST("api/admin/config/allow-user-chat")
-    suspend fun setAllowUserChat(@Body request: AllowUserChatRequest): Response<ApiResponse<Unit>>
+    suspend fun setAllowUserChat(@Body request: AllowRequest): Response<ApiResponse<Unit>>
+
+    @POST("api/admin/config/allow-user-view-items")
+    suspend fun setAllowUserViewItems(@Body request: AllowRequest): Response<ApiResponse<Unit>>
 }

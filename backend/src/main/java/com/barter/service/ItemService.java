@@ -29,6 +29,7 @@ public class ItemService {
 
     private final ItemRepository itemRepository;
     private final UserRepository userRepository;
+    private final SystemConfigService systemConfigService;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -88,9 +89,21 @@ public class ItemService {
         return toItemResponse(item);
     }
 
-    public ItemDto.ItemResponse getItem(Long id) {
+    public ItemDto.ItemResponse getItem(Long id, User currentUser) {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("物品不存在"));
+
+        // 检查可见性权限
+        boolean currentIsAdmin = currentUser != null && currentUser.getIsAdmin() != null && currentUser.getIsAdmin();
+        boolean ownerIsAdmin = item.getOwner().getIsAdmin() != null && item.getOwner().getIsAdmin();
+        boolean allowUserViewItems = systemConfigService.isAllowUserViewItems();
+        
+        // 非管理员且不允许查看用户物品时，只能看管理员的物品或自己的物品
+        if (!currentIsAdmin && !allowUserViewItems && !ownerIsAdmin) {
+            if (currentUser == null || !item.getOwner().getId().equals(currentUser.getId())) {
+                throw new RuntimeException("物品不存在");
+            }
+        }
 
         // 增加浏览量
         item.setViewCount(item.getViewCount() + 1);
@@ -99,14 +112,37 @@ public class ItemService {
         return toItemResponse(item);
     }
 
-    public Page<ItemDto.ItemListResponse> listItems(Pageable pageable) {
-        return itemRepository.findByStatus(Item.ItemStatus.AVAILABLE, pageable)
-                .map(this::toItemListResponse);
+    public Page<ItemDto.ItemListResponse> listItems(Pageable pageable, User currentUser) {
+        Page<Item> items = itemRepository.findByStatus(Item.ItemStatus.AVAILABLE, pageable);
+        return filterItemsForUser(items, currentUser);
     }
 
-    public Page<ItemDto.ItemListResponse> searchItems(String keyword, Pageable pageable) {
-        return itemRepository.searchByKeyword(keyword, Item.ItemStatus.AVAILABLE, pageable)
-                .map(this::toItemListResponse);
+    public Page<ItemDto.ItemListResponse> searchItems(String keyword, Pageable pageable, User currentUser) {
+        Page<Item> items = itemRepository.searchByKeyword(keyword, Item.ItemStatus.AVAILABLE, pageable);
+        return filterItemsForUser(items, currentUser);
+    }
+
+    private Page<ItemDto.ItemListResponse> filterItemsForUser(Page<Item> items, User currentUser) {
+        boolean currentIsAdmin = currentUser != null && currentUser.getIsAdmin() != null && currentUser.getIsAdmin();
+        boolean allowUserViewItems = systemConfigService.isAllowUserViewItems();
+        
+        // 管理员或开启了用户物品可见，返回全部
+        if (currentIsAdmin || allowUserViewItems) {
+            return items.map(this::toItemListResponse);
+        }
+        
+        // 否则只返回管理员的物品 + 自己的物品
+        Long currentUserId = currentUser != null ? currentUser.getId() : null;
+        List<ItemDto.ItemListResponse> filtered = items.getContent().stream()
+                .filter(item -> {
+                    boolean ownerIsAdmin = item.getOwner().getIsAdmin() != null && item.getOwner().getIsAdmin();
+                    boolean isOwn = currentUserId != null && item.getOwner().getId().equals(currentUserId);
+                    return ownerIsAdmin || isOwn;
+                })
+                .map(this::toItemListResponse)
+                .collect(Collectors.toList());
+        
+        return new org.springframework.data.domain.PageImpl<>(filtered, items.getPageable(), filtered.size());
     }
 
     public Page<ItemDto.ItemListResponse> getMyItems(User user, Pageable pageable) {

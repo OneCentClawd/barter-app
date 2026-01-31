@@ -41,21 +41,25 @@ public class ItemController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<ItemDto.ItemResponse> getItem(@PathVariable Long id) {
-        return ApiResponse.success(itemService.getItem(id));
+    public ApiResponse<ItemDto.ItemResponse> getItem(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success(itemService.getItem(id, user));
     }
 
     @GetMapping("/list")
     public ApiResponse<Page<ItemDto.ItemListResponse>> listItems(
-            @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.success(itemService.listItems(pageable));
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success(itemService.listItems(pageable, user));
     }
 
     @GetMapping("/search")
     public ApiResponse<Page<ItemDto.ItemListResponse>> searchItems(
             @RequestParam String keyword,
-            @PageableDefault(size = 20) Pageable pageable) {
-        return ApiResponse.success(itemService.searchItems(keyword, pageable));
+            @PageableDefault(size = 20) Pageable pageable,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success(itemService.searchItems(keyword, pageable, user));
     }
 
     @GetMapping("/my")

@@ -101,9 +101,43 @@ fun AdminSettingsScreen(
 
             Divider()
 
+            // 物品可见性设置
+            Text(
+                text = "物品可见性",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.setAllowUserViewItems(!uiState.allowUserViewItems) }
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("允许用户看到彼此物品")
+                    Text(
+                        text = if (uiState.allowUserViewItems) "用户可以看到所有物品" else "用户只能看到管理员的物品",
+                        fontSize = 13.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.allowUserViewItems,
+                    onCheckedChange = { viewModel.setAllowUserViewItems(it) },
+                    enabled = !uiState.isLoading
+                )
+            }
+
+            Divider()
+
             // 说明
             Text(
-                text = "关闭后，普通用户只能与管理员账号聊天",
+                text = "关闭后，普通用户只能与管理员账号聊天，只能看到管理员发布的物品",
                 fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.padding(16.dp)

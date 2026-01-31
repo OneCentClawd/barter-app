@@ -18,16 +18,31 @@ public class SystemConfigService {
                 .orElse(false);  // 默认不允许
     }
 
+    public boolean isAllowUserViewItems() {
+        return configRepository.findByConfigKey(SystemConfig.ALLOW_USER_VIEW_ITEMS)
+                .map(config -> "true".equalsIgnoreCase(config.getConfigValue()))
+                .orElse(false);  // 默认不允许
+    }
+
     @Transactional
     public void setAllowUserChat(boolean allow) {
-        SystemConfig config = configRepository.findByConfigKey(SystemConfig.ALLOW_USER_CHAT)
+        setConfig(SystemConfig.ALLOW_USER_CHAT, allow, "是否允许普通用户之间聊天");
+    }
+
+    @Transactional
+    public void setAllowUserViewItems(boolean allow) {
+        setConfig(SystemConfig.ALLOW_USER_VIEW_ITEMS, allow, "是否允许用户看到其他用户的物品");
+    }
+
+    private void setConfig(String key, boolean value, String description) {
+        SystemConfig config = configRepository.findByConfigKey(key)
                 .orElseGet(() -> {
                     SystemConfig newConfig = new SystemConfig();
-                    newConfig.setConfigKey(SystemConfig.ALLOW_USER_CHAT);
-                    newConfig.setDescription("是否允许普通用户之间聊天");
+                    newConfig.setConfigKey(key);
+                    newConfig.setDescription(description);
                     return newConfig;
                 });
-        config.setConfigValue(String.valueOf(allow));
+        config.setConfigValue(String.valueOf(value));
         configRepository.save(config);
     }
 
