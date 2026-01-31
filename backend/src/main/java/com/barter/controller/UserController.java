@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -59,5 +60,10 @@ public class UserController {
             @RequestBody UserDto.UpdateSettingsRequest request,
             @AuthenticationPrincipal User user) {
         return ApiResponse.success("设置更新成功", userService.updateSettings(request, user));
+    }
+
+    @GetMapping("/me/login-records")
+    public ApiResponse<List<UserDto.LoginRecordResponse>> getLoginRecords(@AuthenticationPrincipal User user) {
+        return ApiResponse.success(userService.getLoginRecords(user));
     }
 }

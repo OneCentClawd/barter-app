@@ -2,9 +2,11 @@ package com.barter.service;
 
 import com.barter.dto.UserDto;
 import com.barter.entity.Item;
+import com.barter.entity.LoginRecord;
 import com.barter.entity.TradeRequest;
 import com.barter.entity.User;
 import com.barter.repository.ItemRepository;
+import com.barter.repository.LoginRecordRepository;
 import com.barter.repository.TradeRequestRepository;
 import com.barter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
     private final TradeRequestRepository tradeRequestRepository;
+    private final LoginRecordRepository loginRecordRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${upload.path}")
@@ -164,5 +169,22 @@ public class UserService {
         settings.setNotifyTradeUpdate(user.getNotifyTradeUpdate() != null ? user.getNotifyTradeUpdate() : true);
         settings.setNotifySystemAnnouncement(user.getNotifySystemAnnouncement() != null ? user.getNotifySystemAnnouncement() : true);
         return settings;
+    }
+
+    public List<UserDto.LoginRecordResponse> getLoginRecords(User user) {
+        List<LoginRecord> records = loginRecordRepository.findTop10ByUserOrderByLoginTimeDesc(user);
+        return records.stream().map(this::toLoginRecordResponse).collect(Collectors.toList());
+    }
+
+    private UserDto.LoginRecordResponse toLoginRecordResponse(LoginRecord record) {
+        UserDto.LoginRecordResponse response = new UserDto.LoginRecordResponse();
+        response.setId(record.getId());
+        response.setIpAddress(record.getIpAddress());
+        response.setDeviceType(record.getDeviceType());
+        response.setUserAgent(record.getUserAgent());
+        response.setSuccess(record.getSuccess());
+        response.setFailReason(record.getFailReason());
+        response.setLoginTime(record.getLoginTime());
+        return response;
     }
 }

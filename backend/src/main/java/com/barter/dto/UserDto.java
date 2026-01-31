@@ -59,4 +59,15 @@ public class UserDto {
         private Boolean notifyTradeUpdate;
         private Boolean notifySystemAnnouncement;
     }
+
+    @Data
+    public static class LoginRecordResponse {
+        private Long id;
+        private String ipAddress;
+        private String deviceType;
+        private String userAgent;
+        private Boolean success;
+        private String failReason;
+        private LocalDateTime loginTime;
+    }
 }
