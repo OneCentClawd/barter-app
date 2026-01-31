@@ -71,6 +71,11 @@ public class UserService {
         User ratedUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         
+        // 禁止对 test 用户评分
+        if ("test".equalsIgnoreCase(ratedUser.getUsername())) {
+            throw new RuntimeException("该用户不允许被评价");
+        }
+        
         // 查找或创建评分
         UserRating rating = userRatingRepository.findByRaterAndRatedUser(rater, ratedUser)
                 .orElseGet(() -> {
