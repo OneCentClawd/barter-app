@@ -34,6 +34,14 @@ public class ChatService {
             throw new RuntimeException("不能给自己发消息");
         }
 
+        // 检查聊天权限：普通用户只能和管理员聊天
+        boolean senderIsAdmin = sender.getIsAdmin() != null && sender.getIsAdmin();
+        boolean receiverIsAdmin = receiver.getIsAdmin() != null && receiver.getIsAdmin();
+        
+        if (!senderIsAdmin && !receiverIsAdmin) {
+            throw new RuntimeException("目前只能与客服人员聊天");
+        }
+
         // 查找或创建对话
         Conversation conversation = conversationRepository.findByUsers(sender, receiver)
                 .orElseGet(() -> {

@@ -53,6 +53,9 @@ public class User {
     // 单设备登录：token 版本号，每次登录递增，旧 token 失效
     private Long tokenVersion = 0L;
 
+    // 管理员标识
+    private Boolean isAdmin = false;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
