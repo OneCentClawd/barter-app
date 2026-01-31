@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -14,14 +13,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import com.barter.app.BuildConfig
+import com.barter.app.ui.components.AvatarImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +70,9 @@ fun ChatScreen(
                     MessageBubble(
                         content = message.content,
                         isMe = message.isMe,
-                        avatar = message.senderAvatar
+                        avatar = message.senderAvatar,
+                        senderId = message.senderId,
+                        senderName = message.senderNickname ?: "用户"
                     )
                 }
             }
@@ -119,23 +117,21 @@ fun ChatScreen(
 fun MessageBubble(
     content: String,
     isMe: Boolean,
-    avatar: String?
+    avatar: String?,
+    senderId: Long,
+    senderName: String
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
     ) {
         if (!isMe) {
-            val avatarUrl = avatar?.let {
-                if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
-            }
-            AsyncImage(
-                model = avatarUrl ?: "https://via.placeholder.com/40",
-                contentDescription = null,
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            AvatarImage(
+                avatarUrl = avatar,
+                name = senderName,
+                userId = senderId,
+                size = 36.dp,
+                fontSize = 14.sp
             )
             Spacer(modifier = Modifier.width(8.dp))
         }

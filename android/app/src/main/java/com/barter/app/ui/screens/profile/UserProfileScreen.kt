@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.barter.app.data.model.UserRatingResponse
+import com.barter.app.ui.components.AvatarImage
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -80,14 +81,12 @@ fun UserProfileScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // 头像
-                        AsyncImage(
-                            model = profile.avatar,
-                            contentDescription = "头像",
-                            modifier = Modifier
-                                .size(100.dp)
-                                .clip(CircleShape)
-                                .background(Color.LightGray),
-                            contentScale = ContentScale.Crop
+                        AvatarImage(
+                            avatarUrl = profile.avatar,
+                            name = profile.nickname ?: profile.username,
+                            userId = profile.id,
+                            size = 100.dp,
+                            fontSize = 40.sp
                         )
                         
                         Spacer(modifier = Modifier.height(12.dp))
@@ -293,14 +292,12 @@ private fun RatingItem(rating: UserRatingResponse) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        AsyncImage(
-            model = rating.raterAvatar,
-            contentDescription = "头像",
-            modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .background(Color.LightGray),
-            contentScale = ContentScale.Crop
+        AvatarImage(
+            avatarUrl = rating.raterAvatar,
+            name = rating.raterNickname ?: "用户",
+            userId = rating.raterId,
+            size = 40.dp,
+            fontSize = 16.sp
         )
         
         Column(

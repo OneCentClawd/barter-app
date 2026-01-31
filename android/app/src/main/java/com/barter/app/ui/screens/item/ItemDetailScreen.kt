@@ -2,6 +2,7 @@ package com.barter.app.ui.screens.item
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.barter.app.BuildConfig
+import com.barter.app.ui.components.AvatarImage
 import com.barter.app.ui.screens.main.home.getConditionColor
 import com.barter.app.ui.screens.main.home.getConditionText
 
@@ -240,19 +242,17 @@ fun ItemDetailScreen(
                         Divider()
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onNavigateToUserProfile(item.owner.id) },
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            val avatarUrl = item.owner.avatar?.let {
-                                if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
-                            }
-                            AsyncImage(
-                                model = avatarUrl ?: "https://via.placeholder.com/40",
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop
+                            AvatarImage(
+                                avatarUrl = item.owner.avatar,
+                                name = item.owner.nickname ?: item.owner.username,
+                                userId = item.owner.id,
+                                size = 48.dp,
+                                fontSize = 20.sp
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Column(modifier = Modifier.weight(1f)) {

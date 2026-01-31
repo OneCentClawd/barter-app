@@ -11,17 +11,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import com.barter.app.BuildConfig
 import com.barter.app.data.model.Conversation
+import com.barter.app.ui.components.AvatarImage
 
 @Composable
 fun MessagesScreen(
@@ -105,7 +102,7 @@ fun MessagesScreen(
                             onClick = { onNavigateToChat(conversation.id) },
                             onAvatarClick = { onNavigateToUserProfile(conversation.otherUser.id) }
                         )
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
             }
@@ -127,17 +124,13 @@ fun ConversationItem(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // 头像（可点击跳转用户资料）
-        val avatarUrl = conversation.otherUser.avatar?.let {
-            if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
-        }
-        AsyncImage(
-            model = avatarUrl ?: "https://via.placeholder.com/48",
-            contentDescription = null,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .clickable { onAvatarClick() },
-            contentScale = ContentScale.Crop
+        AvatarImage(
+            avatarUrl = conversation.otherUser.avatar,
+            name = conversation.otherUser.nickname ?: conversation.otherUser.username,
+            userId = conversation.otherUser.id,
+            size = 48.dp,
+            fontSize = 20.sp,
+            onClick = onAvatarClick
         )
 
         Spacer(modifier = Modifier.width(12.dp))
