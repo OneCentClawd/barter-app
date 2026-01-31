@@ -33,14 +33,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 Long userId = tokenProvider.getUserIdFromToken(jwt);
+                Long tokenVersion = tokenProvider.getTokenVersionFromToken(jwt);
                 User user = userRepository.findById(userId).orElse(null);
 
                 if (user != null) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user, null, 
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    // 检查 tokenVersion 是否匹配（单设备登录）
+                    Long userTokenVersion = user.getTokenVersion() == null ? 0L : user.getTokenVersion();
+                    if (tokenVersion == null || !tokenVersion.equals(userTokenVersion)) {
+                        // token 版本不匹配，说明在其他设备登录过，此 token 已失效
+                        logger.debug("Token version mismatch, token is invalidated");
+                    } else {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(user, null, 
+                                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")));
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
             }
         } catch (Exception ex) {

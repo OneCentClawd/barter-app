@@ -35,16 +35,18 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
+        user.setTokenVersion(1L);
 
         user = userRepository.save(user);
 
-        // 生成 JWT
-        String token = tokenProvider.generateToken(user.getId(), user.getUsername());
+        // 生成 JWT（包含 tokenVersion）
+        String token = tokenProvider.generateToken(user.getId(), user.getUsername(), user.getTokenVersion());
 
         return new AuthDto.AuthResponse(token, user.getId(), user.getUsername(),
                 user.getNickname(), user.getAvatar());
     }
 
+    @Transactional
     public AuthDto.AuthResponse login(AuthDto.LoginRequest request) {
         // 查找用户
         User user = userRepository.findByUsername(request.getUsername())
@@ -55,8 +57,12 @@ public class AuthService {
             throw new RuntimeException("用户名或密码错误");
         }
 
-        // 生成 JWT
-        String token = tokenProvider.generateToken(user.getId(), user.getUsername());
+        // 递增 tokenVersion，使旧 token 失效
+        user.setTokenVersion(user.getTokenVersion() == null ? 1L : user.getTokenVersion() + 1);
+        userRepository.save(user);
+
+        // 生成 JWT（包含新的 tokenVersion）
+        String token = tokenProvider.generateToken(user.getId(), user.getUsername(), user.getTokenVersion());
 
         return new AuthDto.AuthResponse(token, user.getId(), user.getUsername(),
                 user.getNickname(), user.getAvatar());

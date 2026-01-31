@@ -50,6 +50,9 @@ public class User {
     private Boolean notifyTradeUpdate = true;
     private Boolean notifySystemAnnouncement = true;
 
+    // 单设备登录：token 版本号，每次登录递增，旧 token 失效
+    private Long tokenVersion = 0L;
+
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
