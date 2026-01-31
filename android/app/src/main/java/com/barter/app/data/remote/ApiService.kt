@@ -135,4 +135,11 @@ interface ApiService {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): Response<ApiResponse<PageResponse<Review>>>
+
+    // ========== 管理员 ==========
+    @GET("api/admin/config")
+    suspend fun getAdminConfig(): Response<ApiResponse<SystemConfigResponse>>
+
+    @POST("api/admin/config/allow-user-chat")
+    suspend fun setAllowUserChat(@Body request: AllowUserChatRequest): Response<ApiResponse<Unit>>
 }

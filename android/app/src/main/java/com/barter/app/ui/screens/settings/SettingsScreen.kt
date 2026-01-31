@@ -29,6 +29,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
     onNavigateToLoginRecords: () -> Unit = {},
+    onNavigateToAdminSettings: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -73,6 +74,19 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
+            // ========== 管理员设置（仅管理员可见）==========
+            if (uiState.isAdmin) {
+                SettingsSectionHeader("管理员")
+                
+                SettingsItem(
+                    title = "管理员设置",
+                    subtitle = "系统配置管理",
+                    onClick = onNavigateToAdminSettings
+                )
+                
+                Divider()
+            }
+
             // ========== 账号安全 ==========
             SettingsSectionHeader("账号安全")
             

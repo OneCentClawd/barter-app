@@ -30,6 +30,7 @@ sealed class Screen(val route: String) {
     object EditProfile : Screen("edit_profile")
     object Settings : Screen("settings")
     object LoginRecords : Screen("login_records")
+    object AdminSettings : Screen("admin_settings")
 }
 
 sealed class MainTab(val route: String, val title: String, val icon: String) {

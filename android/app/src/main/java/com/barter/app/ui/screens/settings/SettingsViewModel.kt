@@ -2,6 +2,7 @@ package com.barter.app.ui.screens.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.barter.app.data.local.TokenManager
 import com.barter.app.data.model.UpdateSettingsRequest
 import com.barter.app.data.model.UserSettings
 import com.barter.app.data.repository.AuthRepository
@@ -11,12 +12,14 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
     val settings: UserSettings = UserSettings(),
     val isLoading: Boolean = false,
+    val isAdmin: Boolean = false,
     val passwordChangeResult: PasswordChangeResult? = null
 )
 
@@ -28,7 +31,8 @@ sealed class PasswordChangeResult {
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val tokenManager: TokenManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -36,8 +40,19 @@ class SettingsViewModel @Inject constructor(
 
     init {
         loadSettings()
+        checkAdmin()
     }
 
+    private fun checkAdmin() {
+        viewModelScope.launch {
+            when (val result = userRepository.getMyProfile()) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(isAdmin = result.data.isAdmin)
+                }
+                else -> {}
+            }
+        }
+    }
     private fun loadSettings() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)

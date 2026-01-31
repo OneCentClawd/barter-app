@@ -44,6 +44,7 @@ data class User(
     val ratingCount: Int?,
     val itemCount: Int?,
     val tradeCount: Int?,
+    val isAdmin: Boolean = false,
     val createdAt: String?
 )
 
@@ -232,4 +233,13 @@ data class PageResponse<T>(
     val first: Boolean,
     val last: Boolean,
     val empty: Boolean
+)
+
+// 管理员配置
+data class SystemConfigResponse(
+    val allowUserChat: Boolean
+)
+
+data class AllowUserChatRequest(
+    val allow: Boolean
 )

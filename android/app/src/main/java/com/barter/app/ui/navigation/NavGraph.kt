@@ -22,6 +22,7 @@ import com.barter.app.ui.screens.item.CreateItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
+import com.barter.app.ui.screens.admin.AdminSettingsScreen
 import com.barter.app.ui.screens.settings.LoginRecordsScreen
 import com.barter.app.ui.screens.settings.SettingsScreen
 import com.barter.app.ui.screens.splash.SplashScreen
@@ -206,6 +207,9 @@ fun BarterNavGraph() {
                 },
                 onNavigateToLoginRecords = {
                     navController.navigate(Screen.LoginRecords.route)
+                },
+                onNavigateToAdminSettings = {
+                    navController.navigate(Screen.AdminSettings.route)
                 }
             )
         }
@@ -213,6 +217,13 @@ fun BarterNavGraph() {
         // 登录记录
         composable(Screen.LoginRecords.route) {
             LoginRecordsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 管理员设置
+        composable(Screen.AdminSettings.route) {
+            AdminSettingsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -20,6 +20,7 @@ public class UserDto {
         private Integer ratingCount;
         private Integer itemCount;
         private Integer tradeCount;
+        private Boolean isAdmin;
         private LocalDateTime createdAt;
         // 用户设置
         private UserSettings settings;

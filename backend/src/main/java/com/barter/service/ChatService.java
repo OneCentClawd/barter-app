@@ -24,6 +24,7 @@ public class ChatService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
     private final ItemService itemService;
+    private final SystemConfigService systemConfigService;
 
     @Transactional
     public ChatDto.MessageResponse sendMessage(ChatDto.SendMessageRequest request, User sender) {
@@ -34,11 +35,13 @@ public class ChatService {
             throw new RuntimeException("不能给自己发消息");
         }
 
-        // 检查聊天权限：普通用户只能和管理员聊天
+        // 检查聊天权限
         boolean senderIsAdmin = sender.getIsAdmin() != null && sender.getIsAdmin();
         boolean receiverIsAdmin = receiver.getIsAdmin() != null && receiver.getIsAdmin();
+        boolean allowUserChat = systemConfigService.isAllowUserChat();
         
-        if (!senderIsAdmin && !receiverIsAdmin) {
+        // 如果不允许用户间聊天，且双方都不是管理员，则拒绝
+        if (!allowUserChat && !senderIsAdmin && !receiverIsAdmin) {
             throw new RuntimeException("目前只能与客服人员聊天");
         }
 

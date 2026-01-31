@@ -145,6 +145,7 @@ public class UserService {
         response.setBio(user.getBio());
         response.setRating(user.getRating());
         response.setRatingCount(user.getRatingCount());
+        response.setIsAdmin(user.getIsAdmin() != null && user.getIsAdmin());
         response.setCreatedAt(user.getCreatedAt());
         response.setSettings(toUserSettings(user));
 
