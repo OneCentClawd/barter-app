@@ -92,6 +92,7 @@ fun ChatScreen(
                         avatar = message.senderAvatar,
                         senderId = message.senderId,
                         senderName = message.senderName,
+                        createdAt = message.createdAt,
                         onAvatarClick = {
                             if (!message.isMe) {
                                 onNavigateToUserProfile(message.senderId)
@@ -144,47 +145,84 @@ fun MessageBubble(
     avatar: String?,
     senderId: Long,
     senderName: String,
+    createdAt: String?,
     onAvatarClick: () -> Unit = {}
 ) {
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
+        horizontalAlignment = if (isMe) Alignment.End else Alignment.Start
     ) {
-        if (!isMe) {
-            AvatarImage(
-                avatarUrl = avatar,
-                name = senderName,
-                userId = senderId,
-                size = 36.dp,
-                fontSize = 14.sp,
-                onClick = onAvatarClick
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-        }
-
-        Box(
-            modifier = Modifier
-                .background(
-                    color = if (isMe) MaterialTheme.colorScheme.primary else Color(0xFFF0F0F0),
-                    shape = RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp,
-                        bottomStart = if (isMe) 16.dp else 4.dp,
-                        bottomEnd = if (isMe) 4.dp else 16.dp
-                    )
-                )
-                .padding(12.dp)
-                .widthIn(max = 260.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
         ) {
+            if (!isMe) {
+                AvatarImage(
+                    avatarUrl = avatar,
+                    name = senderName,
+                    userId = senderId,
+                    size = 36.dp,
+                    fontSize = 14.sp,
+                    onClick = onAvatarClick
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+
+            Box(
+                modifier = Modifier
+                    .background(
+                        color = if (isMe) MaterialTheme.colorScheme.primary else Color(0xFFF0F0F0),
+                        shape = RoundedCornerShape(
+                            topStart = 16.dp,
+                            topEnd = 16.dp,
+                            bottomStart = if (isMe) 16.dp else 4.dp,
+                            bottomEnd = if (isMe) 4.dp else 16.dp
+                        )
+                    )
+                    .padding(12.dp)
+                    .widthIn(max = 260.dp)
+            ) {
+                Text(
+                    text = content,
+                    color = if (isMe) Color.White else Color.Black,
+                    fontSize = 15.sp
+                )
+            }
+
+            if (isMe) {
+                Spacer(modifier = Modifier.width(8.dp))
+            }
+        }
+        
+        // 时间显示
+        createdAt?.let { time ->
             Text(
-                text = content,
-                color = if (isMe) Color.White else Color.Black,
-                fontSize = 15.sp
+                text = formatMessageTime(time),
+                fontSize = 11.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(
+                    start = if (!isMe) 44.dp else 0.dp,
+                    top = 2.dp
+                )
             )
         }
+    }
+}
 
-        if (isMe) {
-            Spacer(modifier = Modifier.width(8.dp))
+private fun formatMessageTime(timeStr: String): String {
+    return try {
+        val dateTime = java.time.LocalDateTime.parse(timeStr.replace(" ", "T").take(19))
+        val now = java.time.LocalDateTime.now()
+        val today = now.toLocalDate()
+        val messageDate = dateTime.toLocalDate()
+        
+        when {
+            messageDate == today -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            messageDate == today.minusDays(1) -> "昨天 " + dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            messageDate.year == today.year -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"))
+            else -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
         }
+    } catch (e: Exception) {
+        timeStr.take(16).replace("T", " ")
     }
 }

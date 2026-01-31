@@ -92,6 +92,7 @@ fun NewChatScreen(
                         avatar = message.senderAvatar,
                         senderId = message.senderId,
                         senderName = message.senderName,
+                        createdAt = message.createdAt,
                         onAvatarClick = {
                             if (!message.isMe) {
                                 onNavigateToUserProfile(message.senderId)

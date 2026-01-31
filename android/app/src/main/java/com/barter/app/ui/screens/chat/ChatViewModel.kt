@@ -19,7 +19,8 @@ data class ChatMessage(
     val isMe: Boolean,
     val senderId: Long,
     val senderName: String,
-    val senderAvatar: String?
+    val senderAvatar: String?,
+    val createdAt: String?
 )
 
 data class ChatUiState(
@@ -60,9 +61,10 @@ class ChatViewModel @Inject constructor(
                             isMe = msg.senderId == currentUserId,
                             senderId = msg.senderId,
                             senderName = msg.senderNickname ?: "用户",
-                            senderAvatar = msg.senderAvatar
+                            senderAvatar = msg.senderAvatar,
+                            createdAt = msg.createdAt
                         )
-                    }
+                    }.sortedBy { it.createdAt ?: "" }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         messages = messages,
@@ -97,7 +99,8 @@ class ChatViewModel @Inject constructor(
                         isMe = true,
                         senderId = currentUserId ?: 0L,
                         senderName = "我",
-                        senderAvatar = null
+                        senderAvatar = null,
+                        createdAt = java.time.LocalDateTime.now().toString()
                     )
                     _uiState.value = _uiState.value.copy(
                         isSending = false,

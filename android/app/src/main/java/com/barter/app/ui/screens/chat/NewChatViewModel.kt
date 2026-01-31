@@ -73,7 +73,8 @@ class NewChatViewModel @Inject constructor(
                         isMe = true,
                         senderId = 0L,
                         senderName = "我",
-                        senderAvatar = null
+                        senderAvatar = null,
+                        createdAt = java.time.LocalDateTime.now().toString()
                     )
                     _uiState.value = _uiState.value.copy(
                         isSending = false,
