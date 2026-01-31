@@ -102,7 +102,7 @@ fun MessagesScreen(
                             onClick = { onNavigateToChat(conversation.id) },
                             onAvatarClick = { onNavigateToUserProfile(conversation.otherUser.id) }
                         )
-                        HorizontalDivider()
+                        Divider()
                     }
                 }
             }
