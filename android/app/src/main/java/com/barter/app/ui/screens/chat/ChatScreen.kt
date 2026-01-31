@@ -1,6 +1,7 @@
 package com.barter.app.ui.screens.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,7 @@ import com.barter.app.ui.components.AvatarImage
 fun ChatScreen(
     conversationId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToUserProfile: (Long) -> Unit = {},
     viewModel: ChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +45,24 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.otherUserName ?: "聊天") },
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable {
+                            uiState.otherUserId?.let { onNavigateToUserProfile(it) }
+                        }
+                    ) {
+                        AvatarImage(
+                            avatarUrl = uiState.otherUserAvatar,
+                            name = uiState.otherUserName ?: "用户",
+                            userId = uiState.otherUserId ?: 0L,
+                            size = 36.dp,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(uiState.otherUserName ?: "聊天")
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")

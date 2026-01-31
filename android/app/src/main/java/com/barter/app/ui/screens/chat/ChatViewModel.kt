@@ -26,6 +26,7 @@ data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val otherUserName: String? = null,
     val otherUserId: Long? = null,
+    val otherUserAvatar: String? = null,
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
     val error: String? = null
@@ -66,7 +67,8 @@ class ChatViewModel @Inject constructor(
                         isLoading = false,
                         messages = messages,
                         otherUserName = detail.otherUser?.nickname ?: detail.otherUser?.username,
-                        otherUserId = detail.otherUser?.id
+                        otherUserId = detail.otherUser?.id,
+                        otherUserAvatar = detail.otherUser?.avatar
                     )
                 }
                 is Result.Error -> {

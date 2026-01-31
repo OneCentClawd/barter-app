@@ -240,7 +240,10 @@ fun BarterNavGraph() {
             val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: return@composable
             ChatScreen(
                 conversationId = conversationId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(Screen.UserProfile.createRoute(userId))
+                }
             )
         }
 
@@ -252,7 +255,10 @@ fun BarterNavGraph() {
             val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
             NewChatScreen(
                 userId = userId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { uid ->
+                    navController.navigate(Screen.UserProfile.createRoute(uid))
+                }
             )
         }
 

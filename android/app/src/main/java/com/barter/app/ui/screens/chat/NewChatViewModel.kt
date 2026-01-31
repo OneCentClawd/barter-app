@@ -18,6 +18,7 @@ data class NewChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val otherUserName: String? = null,
     val otherUserId: Long? = null,
+    val otherUserAvatar: String? = null,
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
     val error: String? = null
@@ -45,7 +46,8 @@ class NewChatViewModel @Inject constructor(
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        otherUserName = result.data.nickname ?: result.data.username
+                        otherUserName = result.data.nickname ?: result.data.username,
+                        otherUserAvatar = result.data.avatar
                     )
                 }
                 is Result.Error -> {
