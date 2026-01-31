@@ -91,7 +91,12 @@ fun ChatScreen(
                         isMe = message.isMe,
                         avatar = message.senderAvatar,
                         senderId = message.senderId,
-                        senderName = message.senderName
+                        senderName = message.senderName,
+                        onAvatarClick = {
+                            if (!message.isMe) {
+                                onNavigateToUserProfile(message.senderId)
+                            }
+                        }
                     )
                 }
             }
@@ -138,7 +143,8 @@ fun MessageBubble(
     isMe: Boolean,
     avatar: String?,
     senderId: Long,
-    senderName: String
+    senderName: String,
+    onAvatarClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -150,7 +156,8 @@ fun MessageBubble(
                 name = senderName,
                 userId = senderId,
                 size = 36.dp,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                onClick = onAvatarClick
             )
             Spacer(modifier = Modifier.width(8.dp))
         }
