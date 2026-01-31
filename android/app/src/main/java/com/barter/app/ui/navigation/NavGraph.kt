@@ -1,9 +1,11 @@
 package com.barter.app.ui.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -20,14 +22,32 @@ import com.barter.app.ui.screens.item.CreateItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
+import com.barter.app.ui.screens.settings.LoginRecordsScreen
 import com.barter.app.ui.screens.settings.SettingsScreen
 import com.barter.app.ui.screens.splash.SplashScreen
 import com.barter.app.ui.screens.trade.CreateTradeScreen
 import com.barter.app.ui.screens.trade.TradeDetailScreen
+import com.barter.app.util.AuthEvent
+import com.barter.app.util.AuthEventBus
 
 @Composable
 fun BarterNavGraph() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    
+    // 监听被踢下线事件
+    LaunchedEffect(Unit) {
+        AuthEventBus.events.collect { event ->
+            when (event) {
+                is AuthEvent.TokenExpired -> {
+                    Toast.makeText(context, "账号已在其他设备登录，请重新登录", Toast.LENGTH_LONG).show()
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -183,7 +203,17 @@ fun BarterNavGraph() {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Main.route) { inclusive = true }
                     }
+                },
+                onNavigateToLoginRecords = {
+                    navController.navigate(Screen.LoginRecords.route)
                 }
+            )
+        }
+
+        // 登录记录
+        composable(Screen.LoginRecords.route) {
+            LoginRecordsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

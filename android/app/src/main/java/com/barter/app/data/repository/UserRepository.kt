@@ -191,4 +191,23 @@ class UserRepository @Inject constructor(
             Result.Error("更新设置失败: ${e.message ?: "未知错误"}")
         }
     }
+
+    suspend fun getLoginRecords(): Result<List<LoginRecord>> {
+        return try {
+            val response = apiService.getLoginRecords()
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data ?: emptyList())
+            } else {
+                Result.Error(response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "获取登录记录失败"))
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("获取登录记录失败: ${e.message ?: "未知错误"}")
+        }
+    }
 }

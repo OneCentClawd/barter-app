@@ -28,6 +28,7 @@ import java.io.File
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
     onLogout: () -> Unit,
+    onNavigateToLoginRecords: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -78,6 +79,14 @@ fun SettingsScreen(
             SettingsItem(
                 title = "修改密码",
                 onClick = { showChangePasswordDialog = true }
+            )
+            
+            Divider()
+            
+            SettingsItem(
+                title = "登录记录",
+                subtitle = "查看账号登录历史",
+                onClick = onNavigateToLoginRecords
             )
             
             Divider()

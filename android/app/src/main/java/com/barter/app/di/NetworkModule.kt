@@ -4,6 +4,8 @@ import android.content.Context
 import com.barter.app.BuildConfig
 import com.barter.app.data.local.TokenManager
 import com.barter.app.data.remote.ApiService
+import com.barter.app.util.AuthEvent
+import com.barter.app.util.AuthEventBus
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -41,7 +43,20 @@ object NetworkModule {
             } else {
                 chain.request()
             }
-            chain.proceed(request)
+            val response = chain.proceed(request)
+            
+            // 检测 401 错误（token 失效/被踢下线）
+            if (response.code == 401 && token != null) {
+                // 排除登录接口本身
+                val path = request.url.encodedPath
+                if (!path.contains("/auth/login") && !path.contains("/auth/register")) {
+                    runBlocking {
+                        AuthEventBus.emit(AuthEvent.TokenExpired)
+                    }
+                }
+            }
+            
+            response
         }
     }
 

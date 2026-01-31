@@ -38,6 +38,9 @@ interface ApiService {
     @PUT("api/users/me/settings")
     suspend fun updateSettings(@Body request: UpdateSettingsRequest): Response<ApiResponse<UserSettings>>
 
+    @GET("api/users/me/login-records")
+    suspend fun getLoginRecords(): Response<ApiResponse<List<LoginRecord>>>
+
     // ========== 物品 ==========
     @GET("api/items/list")
     suspend fun getItems(

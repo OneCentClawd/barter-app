@@ -82,6 +82,17 @@ data class UpdateSettingsRequest(
     val notifySystemAnnouncement: Boolean? = null
 )
 
+// 登录记录
+data class LoginRecord(
+    val id: Long,
+    val ipAddress: String?,
+    val deviceType: String?,
+    val userAgent: String?,
+    val success: Boolean,
+    val failReason: String?,
+    val loginTime: String?
+)
+
 // 物品
 enum class ItemCondition {
     NEW, LIKE_NEW, GOOD, FAIR, POOR
