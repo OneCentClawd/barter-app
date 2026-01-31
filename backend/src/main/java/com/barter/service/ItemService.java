@@ -13,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,6 +25,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -172,10 +180,47 @@ public class ItemService {
 
     private String saveImage(MultipartFile file) {
         try {
-            String filename = UUID.randomUUID().toString() + getExtension(file.getOriginalFilename());
+            String filename = UUID.randomUUID().toString() + ".jpg";
             Path path = Paths.get(uploadPath, filename);
             Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
+            
+            // 读取图片并压缩
+            BufferedImage originalImage = ImageIO.read(file.getInputStream());
+            if (originalImage == null) {
+                // 如果无法读取为图片，直接保存原文件
+                Files.write(path, file.getBytes());
+                return "/uploads/" + filename;
+            }
+            
+            // 限制最大尺寸为1920px
+            int maxSize = 1920;
+            int width = originalImage.getWidth();
+            int height = originalImage.getHeight();
+            
+            if (width > maxSize || height > maxSize) {
+                double scale = Math.min((double) maxSize / width, (double) maxSize / height);
+                int newWidth = (int) (width * scale);
+                int newHeight = (int) (height * scale);
+                
+                BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
+                Graphics2D g = resizedImage.createGraphics();
+                g.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
+                g.dispose();
+                originalImage = resizedImage;
+            }
+            
+            // 压缩质量为85%
+            ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+            ImageWriteParam param = writer.getDefaultWriteParam();
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(0.85f);
+            
+            try (ImageOutputStream ios = ImageIO.createImageOutputStream(path.toFile())) {
+                writer.setOutput(ios);
+                writer.write(null, new IIOImage(originalImage, null, null), param);
+            }
+            writer.dispose();
+            
             return "/uploads/" + filename;
         } catch (IOException e) {
             throw new RuntimeException("图片上传失败", e);
