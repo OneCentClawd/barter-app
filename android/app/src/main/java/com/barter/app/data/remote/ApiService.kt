@@ -57,6 +57,9 @@ interface ApiService {
         @Query("size") size: Int = 20
     ): Response<ApiResponse<PageResponse<UserRatingResponse>>>
 
+    @GET("api/users/admin")
+    suspend fun getAdminUser(): Response<ApiResponse<PublicProfile>>
+
     // ========== 物品 ==========
     @GET("api/items/list")
     suspend fun getItems(

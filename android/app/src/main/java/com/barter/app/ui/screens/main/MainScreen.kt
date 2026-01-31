@@ -34,6 +34,7 @@ fun MainScreen(
     onNavigateToCreateItem: () -> Unit,
     onNavigateToUserProfile: (Long) -> Unit,
     onNavigateToChat: (Long) -> Unit,
+    onNavigateToNewChat: (Long) -> Unit,
     onNavigateToTradeDetail: (Long) -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
@@ -105,7 +106,9 @@ fun MainScreen(
             }
             composable(MainTab.Messages.route) {
                 MessagesScreen(
-                    onNavigateToChat = onNavigateToChat
+                    onNavigateToChat = onNavigateToChat,
+                    onNavigateToUserProfile = onNavigateToUserProfile,
+                    onNavigateToNewChat = onNavigateToNewChat
                 )
             }
             composable(MainTab.Profile.route) {

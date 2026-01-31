@@ -48,6 +48,11 @@ public class UserController {
         return ApiResponse.success(userService.getUserRatings(id, pageable));
     }
 
+    @GetMapping("/admin")
+    public ApiResponse<UserDto.PublicProfileResponse> getAdminUser(@AuthenticationPrincipal User currentUser) {
+        return ApiResponse.success(userService.getAdminUser(currentUser));
+    }
+
     @PutMapping("/me")
     public ApiResponse<UserDto.ProfileResponse> updateProfile(
             @Valid @RequestBody UserDto.UpdateProfileRequest request,

@@ -128,6 +128,9 @@ fun BarterNavGraph() {
                 onNavigateToChat = { conversationId ->
                     navController.navigate(Screen.Chat.createRoute(conversationId))
                 },
+                onNavigateToNewChat = { userId ->
+                    navController.navigate(Screen.NewChat.createRoute(userId))
+                },
                 onNavigateToTradeDetail = { tradeId ->
                     navController.navigate(Screen.TradeDetail.createRoute(tradeId))
                 },

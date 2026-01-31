@@ -106,6 +106,14 @@ public class UserService {
         userRepository.save(user);
     }
 
+    public UserDto.PublicProfileResponse getAdminUser(User currentUser) {
+        List<User> admins = userRepository.findByIsAdminTrue();
+        if (admins.isEmpty()) {
+            throw new RuntimeException("暂无客服");
+        }
+        return toPublicProfileResponse(admins.get(0), currentUser);
+    }
+
     @Transactional
     public UserDto.ProfileResponse updateProfile(UserDto.UpdateProfileRequest request, User user) {
         if (request.getNickname() != null) user.setNickname(request.getNickname());

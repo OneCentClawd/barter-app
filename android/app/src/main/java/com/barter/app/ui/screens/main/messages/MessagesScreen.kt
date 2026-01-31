@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SupportAgent
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,41 +26,87 @@ import com.barter.app.data.model.Conversation
 @Composable
 fun MessagesScreen(
     viewModel: MessagesViewModel = hiltViewModel(),
-    onNavigateToChat: (Long) -> Unit
+    onNavigateToChat: (Long) -> Unit,
+    onNavigateToUserProfile: (Long) -> Unit = {},
+    onNavigateToNewChat: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.loadConversations()
+        viewModel.loadAdminUser()
     }
 
-    when {
-        uiState.isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+    Column(modifier = Modifier.fillMaxSize()) {
+        // 联系客服按钮
+        uiState.adminUser?.let { admin ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .clickable { onNavigateToNewChat(admin.id) },
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
-                CircularProgressIndicator()
-            }
-        }
-        uiState.conversations.isEmpty() -> {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("暂无消息")
-            }
-        }
-        else -> {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(uiState.conversations) { conversation ->
-                    ConversationItem(
-                        conversation = conversation,
-                        onClick = { onNavigateToChat(conversation.id) }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SupportAgent,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(32.dp)
                     )
-                    Divider()
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "联系客服",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 16.sp
+                        )
+                        Text(
+                            text = admin.nickname ?: admin.username,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            uiState.conversations.isEmpty() -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("暂无消息")
+                }
+            }
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(uiState.conversations) { conversation ->
+                        ConversationItem(
+                            conversation = conversation,
+                            onClick = { onNavigateToChat(conversation.id) },
+                            onAvatarClick = { onNavigateToUserProfile(conversation.otherUser.id) }
+                        )
+                        Divider()
+                    }
                 }
             }
         }
@@ -68,7 +116,8 @@ fun MessagesScreen(
 @Composable
 fun ConversationItem(
     conversation: Conversation,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onAvatarClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -77,7 +126,7 @@ fun ConversationItem(
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 头像
+        // 头像（可点击跳转用户资料）
         val avatarUrl = conversation.otherUser.avatar?.let {
             if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
         }
@@ -86,7 +135,8 @@ fun ConversationItem(
             contentDescription = null,
             modifier = Modifier
                 .size(48.dp)
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .clickable { onAvatarClick() },
             contentScale = ContentScale.Crop
         )
 
