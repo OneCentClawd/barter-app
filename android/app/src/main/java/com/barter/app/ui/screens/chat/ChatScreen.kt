@@ -72,7 +72,7 @@ fun ChatScreen(
                         isMe = message.isMe,
                         avatar = message.senderAvatar,
                         senderId = message.senderId,
-                        senderName = message.senderNickname ?: "用户"
+                        senderName = message.senderName
                     )
                 }
             }

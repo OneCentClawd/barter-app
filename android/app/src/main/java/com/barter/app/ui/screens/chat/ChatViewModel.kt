@@ -17,6 +17,8 @@ data class ChatMessage(
     val id: Long,
     val content: String,
     val isMe: Boolean,
+    val senderId: Long,
+    val senderName: String,
     val senderAvatar: String?
 )
 
@@ -55,6 +57,8 @@ class ChatViewModel @Inject constructor(
                             id = msg.id,
                             content = msg.content,
                             isMe = msg.senderId == currentUserId,
+                            senderId = msg.senderId,
+                            senderName = msg.senderNickname ?: "用户",
                             senderAvatar = msg.senderAvatar
                         )
                     }
@@ -89,6 +93,8 @@ class ChatViewModel @Inject constructor(
                         id = result.data.id,
                         content = content,
                         isMe = true,
+                        senderId = currentUserId ?: 0L,
+                        senderName = "我",
                         senderAvatar = null
                     )
                     _uiState.value = _uiState.value.copy(
