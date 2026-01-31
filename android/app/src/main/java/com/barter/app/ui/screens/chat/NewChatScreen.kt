@@ -74,7 +74,9 @@ fun NewChatScreen(
                     MessageBubble(
                         content = message.content,
                         isMe = message.isMe,
-                        avatar = message.senderAvatar
+                        avatar = message.senderAvatar,
+                        senderId = message.senderId,
+                        senderName = message.senderName
                     )
                 }
             }

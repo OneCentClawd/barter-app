@@ -69,6 +69,8 @@ class NewChatViewModel @Inject constructor(
                         id = result.data.id,
                         content = content,
                         isMe = true,
+                        senderId = 0L,
+                        senderName = "我",
                         senderAvatar = null
                     )
                     _uiState.value = _uiState.value.copy(
