@@ -5,12 +5,16 @@ import com.barter.entity.Item;
 import com.barter.entity.LoginRecord;
 import com.barter.entity.TradeRequest;
 import com.barter.entity.User;
+import com.barter.entity.UserRating;
 import com.barter.repository.ItemRepository;
 import com.barter.repository.LoginRecordRepository;
 import com.barter.repository.TradeRequestRepository;
+import com.barter.repository.UserRatingRepository;
 import com.barter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +36,7 @@ public class UserService {
     private final ItemRepository itemRepository;
     private final TradeRequestRepository tradeRequestRepository;
     private final LoginRecordRepository loginRecordRepository;
+    private final UserRatingRepository userRatingRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${upload.path}")
@@ -43,8 +48,62 @@ public class UserService {
         return toProfileResponse(user);
     }
 
+    public UserDto.PublicProfileResponse getPublicProfile(Long userId, User currentUser) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        return toPublicProfileResponse(user, currentUser);
+    }
+
     public UserDto.ProfileResponse getMyProfile(User user) {
         return toProfileResponse(user);
+    }
+
+    @Transactional
+    public UserDto.UserRatingResponse rateUser(Long userId, UserDto.RateUserRequest request, User rater) {
+        if (userId.equals(rater.getId())) {
+            throw new RuntimeException("不能给自己打分");
+        }
+        
+        if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
+            throw new RuntimeException("评分必须在1-5之间");
+        }
+        
+        User ratedUser = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        // 查找或创建评分
+        UserRating rating = userRatingRepository.findByRaterAndRatedUser(rater, ratedUser)
+                .orElseGet(() -> {
+                    UserRating newRating = new UserRating();
+                    newRating.setRater(rater);
+                    newRating.setRatedUser(ratedUser);
+                    return newRating;
+                });
+        
+        rating.setRating(request.getRating());
+        rating.setComment(request.getComment());
+        rating.setUpdatedAt(LocalDateTime.now());
+        rating = userRatingRepository.save(rating);
+        
+        // 更新用户平均评分
+        updateUserRating(ratedUser);
+        
+        return toUserRatingResponse(rating);
+    }
+
+    public Page<UserDto.UserRatingResponse> getUserRatings(Long userId, Pageable pageable) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        return userRatingRepository.findByRatedUserOrderByCreatedAtDesc(user, pageable)
+                .map(this::toUserRatingResponse);
+    }
+
+    private void updateUserRating(User user) {
+        Double avgRating = userRatingRepository.getAverageRating(user);
+        Integer count = userRatingRepository.getRatingCount(user);
+        user.setRating(avgRating != null ? avgRating : 5.0);
+        user.setRatingCount(count != null ? count : 0);
+        userRepository.save(user);
     }
 
     @Transactional
@@ -186,6 +245,43 @@ public class UserService {
         response.setSuccess(record.getSuccess());
         response.setFailReason(record.getFailReason());
         response.setLoginTime(record.getLoginTime());
+        return response;
+    }
+
+    private UserDto.PublicProfileResponse toPublicProfileResponse(User user, User currentUser) {
+        UserDto.PublicProfileResponse response = new UserDto.PublicProfileResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setNickname(user.getNickname());
+        response.setAvatar(user.getAvatar());
+        response.setBio(user.getBio());
+        response.setRating(user.getRating());
+        response.setRatingCount(user.getRatingCount());
+        response.setIsAdmin(user.getIsAdmin() != null && user.getIsAdmin());
+        response.setCreatedAt(user.getCreatedAt());
+
+        // 统计物品数
+        long itemCount = itemRepository.findByOwner(user, org.springframework.data.domain.Pageable.unpaged()).getTotalElements();
+        response.setItemCount((int) itemCount);
+
+        // 获取当前用户对此用户的评分
+        if (currentUser != null && !currentUser.getId().equals(user.getId())) {
+            userRatingRepository.findByRaterAndRatedUser(currentUser, user)
+                    .ifPresent(rating -> response.setMyRating(toUserRatingResponse(rating)));
+        }
+
+        return response;
+    }
+
+    private UserDto.UserRatingResponse toUserRatingResponse(UserRating rating) {
+        UserDto.UserRatingResponse response = new UserDto.UserRatingResponse();
+        response.setId(rating.getId());
+        response.setRaterId(rating.getRater().getId());
+        response.setRaterNickname(rating.getRater().getNickname());
+        response.setRaterAvatar(rating.getRater().getAvatar());
+        response.setRating(rating.getRating());
+        response.setComment(rating.getComment());
+        response.setCreatedAt(rating.getCreatedAt());
         return response;
     }
 }

@@ -31,6 +31,9 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object LoginRecords : Screen("login_records")
     object AdminSettings : Screen("admin_settings")
+    object UserProfile : Screen("user_profile/{userId}") {
+        fun createRoute(userId: Long) = "user_profile/$userId"
+    }
 }
 
 sealed class MainTab(val route: String, val title: String, val icon: String) {

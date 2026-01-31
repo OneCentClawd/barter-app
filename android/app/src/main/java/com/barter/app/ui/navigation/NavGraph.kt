@@ -22,6 +22,7 @@ import com.barter.app.ui.screens.item.CreateItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
+import com.barter.app.ui.screens.profile.UserProfileScreen
 import com.barter.app.ui.screens.admin.AdminSettingsScreen
 import com.barter.app.ui.screens.settings.LoginRecordsScreen
 import com.barter.app.ui.screens.settings.SettingsScreen
@@ -261,6 +262,20 @@ fun BarterNavGraph() {
             TradeDetailScreen(
                 tradeId = tradeId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 用户资料
+        composable(
+            route = Screen.UserProfile.route,
+            arguments = listOf(navArgument("userId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
+            UserProfileScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToChat = { uid ->
+                    navController.navigate(Screen.NewChat.createRoute(uid))
+                }
             )
         }
     }

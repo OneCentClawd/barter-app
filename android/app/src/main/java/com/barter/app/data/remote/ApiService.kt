@@ -41,6 +41,22 @@ interface ApiService {
     @GET("api/users/me/login-records")
     suspend fun getLoginRecords(): Response<ApiResponse<List<LoginRecord>>>
 
+    @GET("api/users/{id}")
+    suspend fun getUserProfile(@Path("id") userId: Long): Response<ApiResponse<PublicProfile>>
+
+    @POST("api/users/{id}/rate")
+    suspend fun rateUser(
+        @Path("id") userId: Long,
+        @Body request: RateUserRequest
+    ): Response<ApiResponse<UserRatingResponse>>
+
+    @GET("api/users/{id}/ratings")
+    suspend fun getUserRatings(
+        @Path("id") userId: Long,
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<ApiResponse<PageResponse<UserRatingResponse>>>
+
     // ========== 物品 ==========
     @GET("api/items/list")
     suspend fun getItems(

@@ -48,6 +48,37 @@ data class User(
     val createdAt: String?
 )
 
+// 公开用户资料
+data class PublicProfile(
+    val id: Long,
+    val username: String,
+    val nickname: String?,
+    val avatar: String?,
+    val bio: String?,
+    val rating: Double?,
+    val ratingCount: Int?,
+    val itemCount: Int?,
+    val isAdmin: Boolean = false,
+    val createdAt: String?,
+    val myRating: UserRatingResponse?
+)
+
+// 用户评分
+data class UserRatingResponse(
+    val id: Long,
+    val raterId: Long,
+    val raterNickname: String?,
+    val raterAvatar: String?,
+    val rating: Int,
+    val comment: String?,
+    val createdAt: String
+)
+
+data class RateUserRequest(
+    val rating: Int,
+    val comment: String?
+)
+
 data class UserBrief(
     val id: Long,
     val username: String,

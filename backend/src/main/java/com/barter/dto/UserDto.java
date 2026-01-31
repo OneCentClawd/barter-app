@@ -71,4 +71,37 @@ public class UserDto {
         private String failReason;
         private LocalDateTime loginTime;
     }
+
+    @Data
+    public static class RateUserRequest {
+        private Integer rating;  // 1-5
+        private String comment;
+    }
+
+    @Data
+    public static class UserRatingResponse {
+        private Long id;
+        private Long raterId;
+        private String raterNickname;
+        private String raterAvatar;
+        private Integer rating;
+        private String comment;
+        private LocalDateTime createdAt;
+    }
+
+    @Data
+    public static class PublicProfileResponse {
+        private Long id;
+        private String username;
+        private String nickname;
+        private String avatar;
+        private String bio;
+        private Double rating;
+        private Integer ratingCount;
+        private Integer itemCount;
+        private Boolean isAdmin;
+        private LocalDateTime createdAt;
+        // 当前用户对此用户的评分（如果有）
+        private UserRatingResponse myRating;
+    }
 }
