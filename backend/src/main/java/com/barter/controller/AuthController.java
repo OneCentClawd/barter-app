@@ -22,6 +22,12 @@ public class AuthController {
         emailService.sendVerificationCode(request.getEmail());
         return ApiResponse.success("验证码已发送", null);
     }
+    
+    @PostMapping("/send-login-code")
+    public ApiResponse<Void> sendLoginCode(@Valid @RequestBody AuthDto.SendCodeRequest request) {
+        emailService.sendLoginCode(request.getEmail());
+        return ApiResponse.success("验证码已发送", null);
+    }
 
     @PostMapping("/register")
     public ApiResponse<AuthDto.AuthResponse> register(
@@ -39,6 +45,24 @@ public class AuthController {
         String ipAddress = getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
         return ApiResponse.success("登录成功", authService.login(request, ipAddress, userAgent));
+    }
+    
+    @PostMapping("/login/email")
+    public ApiResponse<AuthDto.AuthResponse> loginWithEmail(
+            @Valid @RequestBody AuthDto.EmailLoginRequest request,
+            HttpServletRequest httpRequest) {
+        String ipAddress = getClientIp(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        return ApiResponse.success("登录成功", authService.loginWithEmail(request, ipAddress, userAgent));
+    }
+    
+    @PostMapping("/login/code")
+    public ApiResponse<AuthDto.AuthResponse> loginWithCode(
+            @Valid @RequestBody AuthDto.CodeLoginRequest request,
+            HttpServletRequest httpRequest) {
+        String ipAddress = getClientIp(httpRequest);
+        String userAgent = httpRequest.getHeader("User-Agent");
+        return ApiResponse.success("登录成功", authService.loginWithCode(request, ipAddress, userAgent));
     }
 
     private String getClientIp(HttpServletRequest request) {

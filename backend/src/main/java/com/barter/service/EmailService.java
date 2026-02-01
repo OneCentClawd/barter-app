@@ -32,7 +32,7 @@ public class EmailService {
     private static final int MAX_SENDS_PER_HOUR = 5;
 
     /**
-     * 发送验证码
+     * 发送注册验证码（邮箱必须未注册）
      */
     @Transactional
     public void sendVerificationCode(String email) {
@@ -41,6 +41,23 @@ public class EmailService {
             throw new RuntimeException("该邮箱已被注册");
         }
 
+        sendCode(email, "注册");
+    }
+    
+    /**
+     * 发送登录验证码（邮箱必须已注册）
+     */
+    @Transactional
+    public void sendLoginCode(String email) {
+        // 检查邮箱是否已注册
+        if (!userRepository.existsByEmail(email)) {
+            throw new RuntimeException("该邮箱未注册");
+        }
+
+        sendCode(email, "登录");
+    }
+    
+    private void sendCode(String email, String purpose) {
         // 检查发送频率
         long recentCount = codeRepository.countByEmailAndCreatedAtAfter(
                 email, LocalDateTime.now().minusHours(1));
@@ -63,25 +80,36 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("易物 <" + fromEmail + ">");
             message.setTo(email);
-            message.setSubject("【易物】邮箱验证码");
+            message.setSubject("【易物】" + purpose + "验证码");
             message.setText(String.format(
-                    "您好！\n\n您的验证码是：%s\n\n验证码有效期为%d分钟，请尽快完成注册。\n\n如非本人操作，请忽略此邮件。\n\n易物团队",
-                    code, CODE_EXPIRY_MINUTES));
-            System.out.println("===EMAIL=== 准备发送邮件到: " + email + " 从: " + fromEmail);
+                    "您好！\n\n您正在进行%s操作，验证码是：%s\n\n验证码有效期为%d分钟。\n\n如非本人操作，请忽略此邮件。\n\n易物团队",
+                    purpose, code, CODE_EXPIRY_MINUTES));
+            log.info("准备发送{}验证码到: {}", purpose, email);
             mailSender.send(message);
-            System.out.println("===EMAIL=== 验证码已发送到: " + email);
+            log.info("验证码已发送到: {}", email);
         } catch (Exception e) {
-            System.err.println("===EMAIL ERROR=== " + e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
+            log.error("发送邮件失败: {} - {}", e.getClass().getName(), e.getMessage());
             throw new RuntimeException("发送验证码失败，请稍后重试");
         }
     }
 
     /**
-     * 验证验证码
+     * 验证注册验证码
      */
     @Transactional
     public boolean verifyCode(String email, String code) {
+        return doVerifyCode(email, code);
+    }
+    
+    /**
+     * 验证登录验证码
+     */
+    @Transactional
+    public boolean verifyLoginCode(String email, String code) {
+        return doVerifyCode(email, code);
+    }
+    
+    private boolean doVerifyCode(String email, String code) {
         var verification = codeRepository.findByEmailAndCodeAndUsedFalseAndExpiresAtAfter(
                 email, code, LocalDateTime.now());
         

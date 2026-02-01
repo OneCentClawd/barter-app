@@ -15,6 +15,16 @@ data class LoginRequest(
     val password: String
 )
 
+data class EmailLoginRequest(
+    val email: String,
+    val password: String
+)
+
+data class CodeLoginRequest(
+    val email: String,
+    val code: String
+)
+
 data class RegisterRequest(
     val username: String,
     val email: String,

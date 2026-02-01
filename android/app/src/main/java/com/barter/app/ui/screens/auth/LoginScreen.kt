@@ -2,8 +2,11 @@ package com.barter.app.ui.screens.auth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -19,25 +22,43 @@ import androidx.compose.ui.unit.sp
 
 data class LoginUiState(
     val isLoading: Boolean = false,
+    val isSendingCode: Boolean = false,
+    val codeSent: Boolean = false,
+    val cooldownSeconds: Int = 0,
     val error: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val cachedEmails: List<String> = emptyList()
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     uiState: LoginUiState,
-    onLogin: (String, String) -> Unit,
+    onLoginWithPassword: (String, String) -> Unit,
+    onLoginWithCode: (String, String) -> Unit,
+    onSendLoginCode: (String) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(uiState.cachedEmails.firstOrNull() ?: "") }
     var password by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var useCodeLogin by remember { mutableStateOf(false) }
+    var showEmailDropdown by remember { mutableStateOf(false) }
+    var localError by remember { mutableStateOf<String?>(null) }
+
+    // 当cachedEmails更新时，自动填充第一个
+    LaunchedEffect(uiState.cachedEmails) {
+        if (email.isEmpty() && uiState.cachedEmails.isNotEmpty()) {
+            email = uiState.cachedEmails.first()
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -58,40 +79,126 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("用户名") },
-            singleLine = true,
+        // 登录方式切换
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
-        )
+            horizontalArrangement = Arrangement.Center
+        ) {
+            FilterChip(
+                selected = !useCodeLogin,
+                onClick = { useCodeLogin = false; localError = null },
+                label = { Text("密码登录") }
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            FilterChip(
+                selected = useCodeLogin,
+                onClick = { useCodeLogin = true; localError = null },
+                label = { Text("验证码登录") }
+            )
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("密码") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading,
-            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            trailingIcon = {
-                IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(
-                        imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                        contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+        // 邮箱输入框（带历史下拉）
+        ExposedDropdownMenuBox(
+            expanded = showEmailDropdown && uiState.cachedEmails.isNotEmpty(),
+            onExpandedChange = { showEmailDropdown = it }
+        ) {
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("邮箱") },
+                singleLine = true,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                enabled = !uiState.isLoading,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = {
+                    if (uiState.cachedEmails.isNotEmpty()) {
+                        IconButton(onClick = { showEmailDropdown = !showEmailDropdown }) {
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "选择邮箱")
+                        }
+                    }
+                }
+            )
+            ExposedDropdownMenu(
+                expanded = showEmailDropdown && uiState.cachedEmails.isNotEmpty(),
+                onDismissRequest = { showEmailDropdown = false }
+            ) {
+                uiState.cachedEmails.forEach { cachedEmail ->
+                    DropdownMenuItem(
+                        text = { Text(cachedEmail) },
+                        onClick = {
+                            email = cachedEmail
+                            showEmailDropdown = false
+                        }
                     )
                 }
             }
-        )
+        }
 
-        uiState.error?.let { error ->
+        Spacer(modifier = Modifier.height(16.dp))
+
+        if (useCodeLogin) {
+            // 验证码登录
+            OutlinedTextField(
+                value = verificationCode,
+                onValueChange = { if (it.length <= 6) verificationCode = it },
+                label = { Text("验证码") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = { Text("请输入6位验证码") },
+                trailingIcon = {
+                    TextButton(
+                        onClick = { 
+                            if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                onSendLoginCode(email)
+                            } else {
+                                localError = "请输入正确的邮箱地址"
+                            }
+                        },
+                        enabled = !uiState.isSendingCode && uiState.cooldownSeconds == 0 && email.isNotBlank()
+                    ) {
+                        if (uiState.isSendingCode) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        } else if (uiState.cooldownSeconds > 0) {
+                            Text("${uiState.cooldownSeconds}s", fontSize = 12.sp)
+                        } else {
+                            Text(if (uiState.codeSent) "重新发送" else "获取验证码", fontSize = 12.sp)
+                        }
+                    }
+                }
+            )
+        } else {
+            // 密码登录
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("密码") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                        )
+                    }
+                }
+            )
+        }
+
+        val error = uiState.error ?: localError
+        error?.let {
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = error,
+                text = it,
                 color = MaterialTheme.colorScheme.error,
                 fontSize = 14.sp
             )
@@ -100,11 +207,31 @@ fun LoginScreen(
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
-            onClick = { onLogin(username, password) },
+            onClick = {
+                localError = null
+                if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                    localError = "请输入正确的邮箱地址"
+                    return@Button
+                }
+                if (useCodeLogin) {
+                    if (verificationCode.length != 6) {
+                        localError = "请输入6位验证码"
+                        return@Button
+                    }
+                    onLoginWithCode(email, verificationCode)
+                } else {
+                    if (password.length < 6) {
+                        localError = "密码至少6位"
+                        return@Button
+                    }
+                    onLoginWithPassword(email, password)
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
-            enabled = !uiState.isLoading && username.isNotBlank() && password.isNotBlank()
+            enabled = !uiState.isLoading && email.isNotBlank() && 
+                     (if (useCodeLogin) verificationCode.isNotBlank() else password.isNotBlank())
         ) {
             if (uiState.isLoading) {
                 CircularProgressIndicator(

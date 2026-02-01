@@ -92,7 +92,9 @@ fun BarterNavGraph() {
 
             LoginScreen(
                 uiState = uiState,
-                onLogin = viewModel::login,
+                onLoginWithPassword = viewModel::loginWithPassword,
+                onLoginWithCode = viewModel::loginWithCode,
+                onSendLoginCode = viewModel::sendLoginCode,
                 onNavigateToRegister = {
                     navController.navigate(Screen.Register.route)
                 }

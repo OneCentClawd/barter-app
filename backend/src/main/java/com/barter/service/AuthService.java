@@ -81,7 +81,7 @@ public class AuthService {
 
     @Transactional
     public AuthDto.AuthResponse login(AuthDto.LoginRequest request, String ipAddress, String userAgent) {
-        // 查找用户
+        // 查找用户（用户名）
         User user = userRepository.findByUsername(request.getUsername()).orElse(null);
         
         if (user == null) {
@@ -90,11 +90,50 @@ public class AuthService {
 
         // 验证密码
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            // 记录失败的登录
             saveLoginRecord(user, ipAddress, userAgent, false, "密码错误");
             throw new RuntimeException("用户名或密码错误");
         }
 
+        return doLogin(user, ipAddress, userAgent);
+    }
+    
+    @Transactional
+    public AuthDto.AuthResponse loginWithEmail(AuthDto.EmailLoginRequest request, String ipAddress, String userAgent) {
+        // 查找用户（邮箱）
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        
+        if (user == null) {
+            throw new RuntimeException("邮箱或密码错误");
+        }
+
+        // 验证密码
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            saveLoginRecord(user, ipAddress, userAgent, false, "密码错误");
+            throw new RuntimeException("邮箱或密码错误");
+        }
+
+        return doLogin(user, ipAddress, userAgent);
+    }
+    
+    @Transactional
+    public AuthDto.AuthResponse loginWithCode(AuthDto.CodeLoginRequest request, String ipAddress, String userAgent) {
+        // 查找用户（邮箱）
+        User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+        
+        if (user == null) {
+            throw new RuntimeException("该邮箱未注册");
+        }
+
+        // 验证验证码
+        if (!emailService.verifyLoginCode(request.getEmail(), request.getCode())) {
+            saveLoginRecord(user, ipAddress, userAgent, false, "验证码错误");
+            throw new RuntimeException("验证码错误或已过期");
+        }
+
+        return doLogin(user, ipAddress, userAgent);
+    }
+    
+    private AuthDto.AuthResponse doLogin(User user, String ipAddress, String userAgent) {
         // 递增 tokenVersion，使旧 token 失效
         user.setTokenVersion(user.getTokenVersion() == null ? 1L : user.getTokenVersion() + 1);
         userRepository.save(user);

@@ -11,9 +11,18 @@ interface ApiService {
     // ========== 认证 ==========
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<ApiResponse<AuthResponse>>
+    
+    @POST("api/auth/login/email")
+    suspend fun loginWithEmail(@Body request: EmailLoginRequest): Response<ApiResponse<AuthResponse>>
+    
+    @POST("api/auth/login/code")
+    suspend fun loginWithCode(@Body request: CodeLoginRequest): Response<ApiResponse<AuthResponse>>
 
     @POST("api/auth/send-code")
     suspend fun sendVerificationCode(@Body request: Map<String, String>): Response<ApiResponse<Unit>>
+    
+    @POST("api/auth/send-login-code")
+    suspend fun sendLoginCode(@Body request: Map<String, String>): Response<ApiResponse<Unit>>
 
     @POST("api/auth/register")
     suspend fun register(@Body request: RegisterRequest): Response<ApiResponse<AuthResponse>>

@@ -22,9 +22,10 @@ class AuthRepository @Inject constructor(
     private val apiService: ApiService,
     private val tokenManager: TokenManager
 ) {
-    suspend fun login(username: String, password: String): Result<AuthResponse> {
+    // 邮箱+密码登录
+    suspend fun loginWithEmail(email: String, password: String): Result<AuthResponse> {
         return try {
-            val response = apiService.login(LoginRequest(username, password))
+            val response = apiService.loginWithEmail(EmailLoginRequest(email, password))
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()!!.data!!
                 tokenManager.saveAuthData(
@@ -36,13 +37,12 @@ class AuthRepository @Inject constructor(
                 )
                 Result.Success(data)
             } else {
-                // 优先使用后端返回的错误信息
                 val serverMessage = response.body()?.message
                 val errorMsg = if (!serverMessage.isNullOrBlank()) {
                     serverMessage
                 } else {
                     when (response.code()) {
-                        400, 401 -> "用户名或密码错误"
+                        400, 401 -> "邮箱或密码错误"
                         404 -> "用户不存在"
                         500 -> "服务器错误，请稍后重试"
                         else -> "登录失败"
@@ -57,10 +57,59 @@ class AuthRepository @Inject constructor(
         } catch (e: ConnectException) {
             Result.Error("连接失败，请检查网络或服务器状态")
         } catch (e: Exception) {
-            Result.Error("用户名或密码错误")
+            Result.Error("邮箱或密码错误")
         }
     }
     
+    // 邮箱+验证码登录
+    suspend fun loginWithCode(email: String, code: String): Result<AuthResponse> {
+        return try {
+            val response = apiService.loginWithCode(CodeLoginRequest(email, code))
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()!!.data!!
+                tokenManager.saveAuthData(
+                    token = data.token,
+                    userId = data.userId,
+                    username = data.username,
+                    nickname = data.nickname,
+                    avatar = data.avatar
+                )
+                Result.Success(data)
+            } else {
+                Result.Error(response.body()?.message ?: "验证码错误或已过期")
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("登录失败: ${e.message ?: "未知错误"}")
+        }
+    }
+    
+    // 发送登录验证码
+    suspend fun sendLoginCode(email: String): Result<Unit> {
+        return try {
+            val response = apiService.sendLoginCode(mapOf("email" to email))
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(Unit)
+            } else {
+                Result.Error(response.body()?.message ?: "发送验证码失败")
+            }
+        } catch (e: UnknownHostException) {
+            Result.Error("无法连接服务器，请检查网络")
+        } catch (e: SocketTimeoutException) {
+            Result.Error("连接超时，请检查网络后重试")
+        } catch (e: ConnectException) {
+            Result.Error("连接失败，请检查网络或服务器状态")
+        } catch (e: Exception) {
+            Result.Error("发送验证码失败: ${e.message ?: "未知错误"}")
+        }
+    }
+    
+    // 发送注册验证码
     suspend fun sendVerificationCode(email: String): Result<Unit> {
         return try {
             val response = apiService.sendVerificationCode(mapOf("email" to email))
@@ -108,6 +157,7 @@ class AuthRepository @Inject constructor(
                     nickname = data.nickname,
                     avatar = data.avatar
                 )
+                tokenManager.cacheEmail(email)
                 Result.Success(data)
             } else {
                 val errorMsg = response.body()?.message ?: ErrorHandler.getHttpErrorMessage(response, "注册失败")
@@ -130,6 +180,14 @@ class AuthRepository @Inject constructor(
 
     suspend fun isLoggedIn(): Boolean {
         return tokenManager.token.first() != null
+    }
+    
+    suspend fun cacheEmail(email: String) {
+        tokenManager.cacheEmail(email)
+    }
+    
+    suspend fun getCachedEmails(): List<String> {
+        return tokenManager.getCachedEmails()
     }
 
     fun getToken() = tokenManager.token
