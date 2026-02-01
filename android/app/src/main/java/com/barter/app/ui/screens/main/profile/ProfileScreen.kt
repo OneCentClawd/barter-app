@@ -162,50 +162,6 @@ fun ProfileScreen(
                 )
             }
         }
-
-        // 我的物品
-        Spacer(modifier = Modifier.height(16.dp))
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "我的物品",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
-            )
-            if (uiState.myItems.isNotEmpty()) {
-                TextButton(onClick = onNavigateToMyItems) {
-                    Text("查看全部")
-                }
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (uiState.myItems.isEmpty()) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("暂无物品", color = Color.Gray)
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.myItems) { item ->
-                    ItemCard(item = item, onClick = { onNavigateToItemDetail(item.id) })
-                }
-            }
-        }
     }
 }
 
