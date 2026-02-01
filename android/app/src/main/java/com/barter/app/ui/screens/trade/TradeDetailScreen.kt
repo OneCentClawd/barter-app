@@ -1,5 +1,6 @@
 package com.barter.app.ui.screens.trade
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -31,6 +32,7 @@ import com.barter.app.data.model.TradeStatus
 fun TradeDetailScreen(
     tradeId: Long,
     onNavigateBack: () -> Unit,
+    onNavigateToItemDetail: (Long) -> Unit = {},
     viewModel: TradeDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -113,7 +115,8 @@ fun TradeDetailScreen(
                     ItemCard(
                         title = uiState.targetItemTitle ?: "",
                         imageUrl = uiState.targetItemImage,
-                        ownerName = uiState.targetOwnerName ?: ""
+                        ownerName = uiState.targetOwnerName ?: "",
+                        onClick = { uiState.targetItemId?.let { onNavigateToItemDetail(it) } }
                     )
 
                     Icon(
@@ -127,7 +130,8 @@ fun TradeDetailScreen(
                     ItemCard(
                         title = uiState.offeredItemTitle ?: "",
                         imageUrl = uiState.offeredItemImage,
-                        ownerName = uiState.offeredOwnerName ?: ""
+                        ownerName = uiState.offeredOwnerName ?: "",
+                        onClick = { uiState.offeredItemId?.let { onNavigateToItemDetail(it) } }
                     )
                 }
 
@@ -148,7 +152,7 @@ fun TradeDetailScreen(
                     }
                 }
 
-                // 操作按钮（仅对收到的请求显示）
+                // 操作按钮（对收到的请求：接受/拒绝）
                 if (uiState.canRespond && uiState.status == TradeStatus.PENDING) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -173,8 +177,22 @@ fun TradeDetailScreen(
                         }
                     }
                 }
+                
+                // 取消按钮（发起方在 PENDING 状态可取消）
+                if (uiState.isRequester && uiState.status == TradeStatus.PENDING) {
+                    OutlinedButton(
+                        onClick = { viewModel.cancelTrade() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isActioning,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.Red
+                        )
+                    ) {
+                        Text("取消交换请求")
+                    }
+                }
 
-                // 已接受的交易 - 显示确认完成按钮
+                // 已接受的交易 - 显示确认完成按钮和取消按钮
                 if (uiState.status == TradeStatus.ACCEPTED) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -230,6 +248,18 @@ fun TradeDetailScreen(
                             }
                         }
                     }
+                    
+                    // 取消按钮（ACCEPTED 状态双方都可取消）
+                    OutlinedButton(
+                        onClick = { viewModel.cancelTrade() },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isActioning,
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color.Red
+                        )
+                    ) {
+                        Text("取消交换")
+                    }
                 }
 
                 // 错误提示
@@ -272,10 +302,13 @@ private fun ConfirmStatusChip(
 private fun ItemCard(
     title: String,
     imageUrl: String?,
-    ownerName: String
+    ownerName: String,
+    onClick: () -> Unit = {}
 ) {
     Card(
-        modifier = Modifier.width(140.dp),
+        modifier = Modifier
+            .width(140.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp)
     ) {
         Column {

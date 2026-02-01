@@ -19,9 +19,11 @@ data class TradeDetailUiState(
     val error: String? = null,
     val status: TradeStatus? = null,
     val message: String? = null,
+    val targetItemId: Long? = null,
     val targetItemTitle: String? = null,
     val targetItemImage: String? = null,
     val targetOwnerName: String? = null,
+    val offeredItemId: Long? = null,
     val offeredItemTitle: String? = null,
     val offeredItemImage: String? = null,
     val offeredOwnerName: String? = null,
@@ -67,9 +69,11 @@ class TradeDetailViewModel @Inject constructor(
                         isLoading = false,
                         status = trade.status,
                         message = trade.message,
+                        targetItemId = trade.targetItem?.id,
                         targetItemTitle = trade.targetItem?.title,
                         targetItemImage = trade.targetItem?.coverImage,
                         targetOwnerName = trade.targetItem?.owner?.nickname ?: trade.targetItem?.owner?.username,
+                        offeredItemId = trade.offeredItem?.id,
                         offeredItemTitle = trade.offeredItem?.title,
                         offeredItemImage = trade.offeredItem?.coverImage,
                         offeredOwnerName = trade.offeredItem?.owner?.nickname ?: trade.offeredItem?.owner?.username,
@@ -140,6 +144,28 @@ class TradeDetailViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isActioning = true, actionError = null)
             
             when (val result = tradeRepository.updateTradeStatus(tradeId, TradeStatus.COMPLETED)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isActioning = false,
+                        isActionSuccess = true
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isActioning = false,
+                        actionError = result.message
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+    
+    fun cancelTrade() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isActioning = true, actionError = null)
+            
+            when (val result = tradeRepository.updateTradeStatus(tradeId, TradeStatus.CANCELLED)) {
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(
                         isActioning = false,

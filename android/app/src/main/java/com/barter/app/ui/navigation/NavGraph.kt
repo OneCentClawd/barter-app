@@ -303,7 +303,10 @@ fun BarterNavGraph() {
             val tradeId = backStackEntry.arguments?.getLong("tradeId") ?: return@composable
             TradeDetailScreen(
                 tradeId = tradeId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToItemDetail = { itemId ->
+                    navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                }
             )
         }
 
