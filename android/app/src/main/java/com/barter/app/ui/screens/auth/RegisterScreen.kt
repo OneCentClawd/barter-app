@@ -2,7 +2,9 @@ package com.barter.app.ui.screens.auth
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
@@ -11,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -20,6 +23,9 @@ import androidx.compose.ui.unit.sp
 
 data class RegisterUiState(
     val isLoading: Boolean = false,
+    val isSendingCode: Boolean = false,
+    val codeSent: Boolean = false,
+    val cooldownSeconds: Int = 0,
     val error: String? = null,
     val isSuccess: Boolean = false
 )
@@ -28,14 +34,17 @@ data class RegisterUiState(
 @Composable
 fun RegisterScreen(
     uiState: RegisterUiState,
-    onRegister: (String, String, String, String) -> Unit,
+    onSendCode: (String) -> Unit,
+    onRegister: (String, String, String, String, String, Long?) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
+    var referrerId by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var localError by remember { mutableStateOf<String?>(null) }
 
@@ -55,7 +64,8 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
@@ -65,7 +75,7 @@ fun RegisterScreen(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             OutlinedTextField(
                 value = username,
@@ -78,6 +88,7 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // 邮箱 + 发送验证码
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
@@ -85,7 +96,41 @@ fun RegisterScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !uiState.isLoading,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                trailingIcon = {
+                    TextButton(
+                        onClick = { 
+                            if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                onSendCode(email) 
+                            } else {
+                                localError = "请输入正确的邮箱地址"
+                            }
+                        },
+                        enabled = !uiState.isSendingCode && uiState.cooldownSeconds == 0 && email.isNotBlank()
+                    ) {
+                        if (uiState.isSendingCode) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        } else if (uiState.cooldownSeconds > 0) {
+                            Text("${uiState.cooldownSeconds}s", fontSize = 12.sp)
+                        } else {
+                            Text(if (uiState.codeSent) "重新发送" else "获取验证码", fontSize = 12.sp)
+                        }
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 验证码输入
+            OutlinedTextField(
+                value = verificationCode,
+                onValueChange = { if (it.length <= 6) verificationCode = it },
+                label = { Text("验证码 *") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                placeholder = { Text("请输入6位验证码") }
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -133,6 +178,20 @@ fun RegisterScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // 推荐人ID
+            OutlinedTextField(
+                value = referrerId,
+                onValueChange = { if (it.isEmpty() || it.all { c -> c.isDigit() }) referrerId = it },
+                label = { Text("推荐人ID（可选）") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                supportingText = { Text("填写推荐人ID，推荐人可获得50积分奖励", color = Color.Gray, fontSize = 12.sp) }
+            )
+
             val error = uiState.error ?: localError
             error?.let {
                 Spacer(modifier = Modifier.height(8.dp))
@@ -151,15 +210,24 @@ fun RegisterScreen(
                     when {
                         username.length < 3 -> localError = "用户名至少3个字符"
                         !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches() -> localError = "邮箱格式不正确"
+                        verificationCode.length != 6 -> localError = "请输入6位验证码"
                         password.length < 6 -> localError = "密码至少6个字符"
                         password != confirmPassword -> localError = "两次密码不一致"
-                        else -> onRegister(username, email, password, nickname.ifBlank { username })
+                        else -> onRegister(
+                            username, 
+                            email, 
+                            password, 
+                            nickname.ifBlank { username },
+                            verificationCode,
+                            referrerId.toLongOrNull()
+                        )
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                enabled = !uiState.isLoading && username.isNotBlank() && email.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
+                enabled = !uiState.isLoading && username.isNotBlank() && email.isNotBlank() 
+                        && verificationCode.isNotBlank() && password.isNotBlank() && confirmPassword.isNotBlank()
             ) {
                 if (uiState.isLoading) {
                     CircularProgressIndicator(
@@ -185,6 +253,8 @@ fun RegisterScreen(
                     modifier = Modifier.clickable { onNavigateBack() }
                 )
             }
+            
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }

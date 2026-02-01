@@ -238,6 +238,27 @@ public class WalletService {
     }
 
     /**
+     * 推荐奖励
+     */
+    @Transactional
+    public void addReferralReward(User referrer, User newUser, int points) {
+        UserWallet wallet = getOrCreateWallet(referrer);
+        wallet.setPoints(wallet.getPoints() + points);
+        wallet.setUpdatedAt(LocalDateTime.now());
+        walletRepository.save(wallet);
+
+        WalletTransaction transaction = new WalletTransaction();
+        transaction.setUser(referrer);
+        transaction.setType(WalletTransaction.TransactionType.INVITE_REWARD);
+        transaction.setPointsChange(points);
+        transaction.setPointsAfter(wallet.getPoints());
+        transaction.setBalanceAfter(wallet.getBalance());
+        transaction.setDescription("邀请新用户 " + newUser.getUsername() + " 注册奖励");
+        transaction.setRelatedId(newUser.getId());
+        transactionRepository.save(transaction);
+    }
+
+    /**
      * 获取钱包流水
      */
     public Page<WalletTransaction> getTransactions(User user, Pageable pageable) {

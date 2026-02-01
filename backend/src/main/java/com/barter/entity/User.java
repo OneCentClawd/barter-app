@@ -45,6 +45,11 @@ public class User {
     
     // 信用分系统
     private Integer creditScore = 100;  // 初始信用分100
+    
+    // 推荐人
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "referrer_id")
+    private User referrer;
 
     // 用户设置
     private Boolean showPhoneToOthers = true;
@@ -58,6 +63,9 @@ public class User {
 
     // 管理员标识
     private Boolean isAdmin = false;
+    
+    // 邮箱是否验证
+    private Boolean emailVerified = false;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

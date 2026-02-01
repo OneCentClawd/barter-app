@@ -3,6 +3,7 @@ package com.barter.service;
 import com.barter.dto.AuthDto;
 import com.barter.entity.LoginRecord;
 import com.barter.entity.User;
+import com.barter.entity.WalletTransaction;
 import com.barter.repository.LoginRecordRepository;
 import com.barter.repository.UserRepository;
 import com.barter.security.JwtTokenProvider;
@@ -19,6 +20,11 @@ public class AuthService {
     private final LoginRecordRepository loginRecordRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final EmailService emailService;
+    private final WalletService walletService;
+
+    // 推荐奖励积分
+    private static final int REFERRAL_REWARD_POINTS = 50;
 
     @Transactional
     public AuthDto.AuthResponse register(AuthDto.RegisterRequest request, String ipAddress, String userAgent) {
@@ -32,6 +38,20 @@ public class AuthService {
             throw new RuntimeException("邮箱已被注册");
         }
 
+        // 验证邮箱验证码
+        if (!emailService.verifyCode(request.getEmail(), request.getVerificationCode())) {
+            throw new RuntimeException("验证码错误或已过期");
+        }
+
+        // 检查推荐人
+        User referrer = null;
+        if (request.getReferrerId() != null) {
+            referrer = userRepository.findById(request.getReferrerId()).orElse(null);
+            if (referrer == null) {
+                throw new RuntimeException("推荐人不存在");
+            }
+        }
+
         // 创建新用户
         User user = new User();
         user.setUsername(request.getUsername());
@@ -39,8 +59,15 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setNickname(request.getNickname() != null ? request.getNickname() : request.getUsername());
         user.setTokenVersion(1L);
+        user.setEmailVerified(true);
+        user.setReferrer(referrer);
 
         user = userRepository.save(user);
+
+        // 给推荐人发放奖励
+        if (referrer != null) {
+            walletService.addReferralReward(referrer, user, REFERRAL_REWARD_POINTS);
+        }
 
         // 记录登录信息
         saveLoginRecord(user, ipAddress, userAgent, true, null);

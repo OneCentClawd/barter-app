@@ -19,7 +19,9 @@ data class RegisterRequest(
     val username: String,
     val email: String,
     val password: String,
-    val nickname: String?
+    val nickname: String?,
+    val verificationCode: String,
+    val referrerId: Long? = null
 )
 
 data class AuthResponse(

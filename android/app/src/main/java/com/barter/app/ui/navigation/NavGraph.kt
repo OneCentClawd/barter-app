@@ -114,6 +114,7 @@ fun BarterNavGraph() {
 
             RegisterScreen(
                 uiState = uiState,
+                onSendCode = viewModel::sendVerificationCode,
                 onRegister = viewModel::register,
                 onNavigateBack = { navController.popBackStack() }
             )
