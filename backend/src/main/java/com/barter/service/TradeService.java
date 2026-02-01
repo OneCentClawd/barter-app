@@ -3,9 +3,11 @@ package com.barter.service;
 import com.barter.dto.ItemDto;
 import com.barter.dto.TradeDto;
 import com.barter.entity.Item;
+import com.barter.entity.Notification;
 import com.barter.entity.TradeRequest;
 import com.barter.entity.User;
 import com.barter.repository.ItemRepository;
+import com.barter.repository.NotificationRepository;
 import com.barter.repository.TradeRequestRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ public class TradeService {
     private final TradeRequestRepository tradeRequestRepository;
     private final ItemRepository itemRepository;
     private final ItemService itemService;
+    private final NotificationRepository notificationRepository;
 
     @Transactional
     public TradeDto.TradeResponse createTradeRequest(TradeDto.CreateRequest request, User requester) {
@@ -123,8 +126,35 @@ public class TradeService {
                 return toTradeResponse(tradeRequest);  // 提前返回，不改变状态
 
             case CANCELLED:
-                if (!isRequester || currentStatus != TradeRequest.TradeStatus.PENDING) {
-                    throw new RuntimeException("只有请求方可以取消待处理的请求");
+                // 只有 PENDING 和 ACCEPTED 状态可以取消
+                if (currentStatus != TradeRequest.TradeStatus.PENDING && 
+                    currentStatus != TradeRequest.TradeStatus.ACCEPTED) {
+                    throw new RuntimeException("当前状态无法取消");
+                }
+                
+                // 如果是 ACCEPTED 状态取消，需要恢复物品状态并通知对方
+                if (currentStatus == TradeRequest.TradeStatus.ACCEPTED) {
+                    // 恢复物品为可用状态
+                    tradeRequest.getTargetItem().setStatus(Item.ItemStatus.AVAILABLE);
+                    tradeRequest.getOfferedItem().setStatus(Item.ItemStatus.AVAILABLE);
+                    
+                    // 通知被取消的一方
+                    User cancelledUser = isRequester ? 
+                        tradeRequest.getTargetItem().getOwner() : 
+                        tradeRequest.getRequester();
+                    String cancellerName = isRequester ? 
+                        (tradeRequest.getRequester().getNickname() != null ? 
+                            tradeRequest.getRequester().getNickname() : 
+                            tradeRequest.getRequester().getUsername()) :
+                        (user.getNickname() != null ? user.getNickname() : user.getUsername());
+                    
+                    Notification notification = new Notification();
+                    notification.setUser(cancelledUser);
+                    notification.setType(Notification.NotificationType.TRADE);
+                    notification.setTitle("交换已取消");
+                    notification.setContent(cancellerName + " 取消了与您的交换请求");
+                    notification.setRelatedId(tradeRequest.getId());
+                    notificationRepository.save(notification);
                 }
                 break;
 
