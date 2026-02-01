@@ -1,5 +1,8 @@
 package com.barter.app.ui.screens.auth
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -79,26 +83,6 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // 登录方式切换
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            FilterChip(
-                selected = !useCodeLogin,
-                onClick = { useCodeLogin = false; localError = null },
-                label = { Text("密码登录") }
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            FilterChip(
-                selected = useCodeLogin,
-                onClick = { useCodeLogin = true; localError = null },
-                label = { Text("验证码登录") }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
         // 邮箱输入框（带历史下拉）
         ExposedDropdownMenuBox(
             expanded = showEmailDropdown && uiState.cachedEmails.isNotEmpty(),
@@ -140,8 +124,38 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (useCodeLogin) {
-            // 验证码登录
+        // 密码输入框（密码登录模式）
+        AnimatedVisibility(
+            visible = !useCodeLogin,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
+            OutlinedTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = { Text("密码") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !uiState.isLoading,
+                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                trailingIcon = {
+                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        Icon(
+                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                            contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                        )
+                    }
+                }
+            )
+        }
+
+        // 验证码输入框（验证码登录模式）
+        AnimatedVisibility(
+            visible = useCodeLogin,
+            enter = fadeIn(),
+            exit = fadeOut()
+        ) {
             OutlinedTextField(
                 value = verificationCode,
                 onValueChange = { if (it.length <= 6) verificationCode = it },
@@ -172,26 +186,6 @@ fun LoginScreen(
                     }
                 }
             )
-        } else {
-            // 密码登录
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("密码") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
-                        )
-                    }
-                }
-            )
         }
 
         val error = uiState.error ?: localError
@@ -204,7 +198,20 @@ fun LoginScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 切换登录方式（文字链接形式，放在输入框下方）
+        Text(
+            text = if (useCodeLogin) "使用密码登录" else "使用验证码登录",
+            color = MaterialTheme.colorScheme.primary,
+            fontSize = 14.sp,
+            modifier = Modifier.clickable { 
+                useCodeLogin = !useCodeLogin
+                localError = null
+            }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         Button(
             onClick = {
