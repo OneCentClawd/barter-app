@@ -198,6 +198,9 @@ interface ApiService {
     @POST("api/wallet/sign-in")
     suspend fun signIn(): Response<ApiResponse<WalletTransaction>>
     
+    @POST("api/wallet/recharge")
+    suspend fun recharge(@Body request: Map<String, @JvmSuppressWildcards Any>): Response<ApiResponse<WalletTransaction>>
+    
     @GET("api/wallet/transactions")
     suspend fun getWalletTransactions(
         @Query("page") page: Int = 0,

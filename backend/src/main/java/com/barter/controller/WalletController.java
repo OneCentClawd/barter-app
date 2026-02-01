@@ -68,6 +68,31 @@ public class WalletController {
     }
 
     /**
+     * 充值（测试用，实际需要对接支付）
+     */
+    @PostMapping("/recharge")
+    public ResponseEntity<ApiResponse<WalletDto.TransactionResponse>> recharge(
+            @AuthenticationPrincipal User user,
+            @RequestBody WalletDto.RechargeRequest request) {
+        if (request.getAmount() == null || request.getAmount().doubleValue() <= 0) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("充值金额必须大于0"));
+        }
+        
+        WalletTransaction transaction = walletService.recharge(user, request.getAmount());
+        
+        WalletDto.TransactionResponse response = new WalletDto.TransactionResponse();
+        response.setId(transaction.getId());
+        response.setType(transaction.getType());
+        response.setPointsChange(transaction.getPointsChange());
+        response.setBalanceChange(transaction.getBalanceChange());
+        response.setDescription(transaction.getDescription());
+        response.setCreatedAt(transaction.getCreatedAt());
+
+        return ResponseEntity.ok(ApiResponse.success("充值成功", response));
+    }
+
+    /**
      * 获取钱包流水
      */
     @GetMapping("/transactions")

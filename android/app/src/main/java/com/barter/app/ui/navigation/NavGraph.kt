@@ -368,6 +368,14 @@ fun BarterNavGraph() {
         // 钱包
         composable(Screen.Wallet.route) {
             WalletScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToRecharge = { navController.navigate(Screen.Recharge.route) }
+            )
+        }
+        
+        // 充值
+        composable(Screen.Recharge.route) {
+            com.barter.app.ui.screens.wallet.RechargeScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

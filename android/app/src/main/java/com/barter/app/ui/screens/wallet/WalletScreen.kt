@@ -24,6 +24,7 @@ import com.barter.app.data.model.WalletTransaction
 @Composable
 fun WalletScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToRecharge: () -> Unit = {},
     viewModel: WalletViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -82,7 +83,7 @@ fun WalletScreen(
                         isSigningIn = uiState.isSigningIn,
                         onSignIn = { viewModel.signIn() },
                         onShowRules = { showPointsRules = true },
-                        onRecharge = { /* TODO: 跳转充值页面 */ }
+                        onRecharge = onNavigateToRecharge
                     )
                 }
                 

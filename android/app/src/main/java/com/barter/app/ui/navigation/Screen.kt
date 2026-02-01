@@ -36,6 +36,7 @@ sealed class Screen(val route: String) {
     object MyRatings : Screen("my_ratings")
     object MyWishes : Screen("my_wishes")
     object Wallet : Screen("wallet")
+    object Recharge : Screen("recharge")
 }
 
 sealed class MainTab(val route: String, val title: String, val icon: String) {
