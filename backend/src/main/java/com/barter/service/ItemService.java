@@ -294,6 +294,27 @@ public class ItemService {
         response.setWishCount(itemWishRepository.countByItem(item));
         response.setIsWished(currentUser != null && itemWishRepository.existsByUserAndItem(currentUser, item));
         response.setCreatedAt(item.getCreatedAt());
+        
+        // 交易信息（已交换的物品才有）
+        if (item.getStatus() == Item.ItemStatus.TRADED && item.getPreviousOwner() != null) {
+            ItemDto.TradeInfo tradeInfo = new ItemDto.TradeInfo();
+            tradeInfo.setTradeRequestId(item.getTradeRequest() != null ? item.getTradeRequest().getId() : null);
+            tradeInfo.setPreviousOwner(toUserBrief(item.getPreviousOwner()));
+            tradeInfo.setTradedAt(item.getTradedAt());
+            
+            if (item.getTradedFromItem() != null) {
+                ItemDto.ItemBrief itemBrief = new ItemDto.ItemBrief();
+                itemBrief.setId(item.getTradedFromItem().getId());
+                itemBrief.setTitle(item.getTradedFromItem().getTitle());
+                itemBrief.setCoverImage(item.getTradedFromItem().getImages() != null && 
+                    !item.getTradedFromItem().getImages().isEmpty() ?
+                    item.getTradedFromItem().getImages().get(0).getImageUrl() : null);
+                tradeInfo.setTradedForItem(itemBrief);
+            }
+            
+            response.setTradeInfo(tradeInfo);
+        }
+        
         return response;
     }
 

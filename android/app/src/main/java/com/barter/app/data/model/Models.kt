@@ -147,7 +147,21 @@ data class Item(
     val viewCount: Int?,
     val wishCount: Int?,
     val isWished: Boolean?,
-    val createdAt: String?
+    val createdAt: String?,
+    val tradeInfo: TradeInfo?
+)
+
+data class TradeInfo(
+    val tradeRequestId: Long?,
+    val previousOwner: UserBrief?,
+    val tradedForItem: ItemBrief?,
+    val tradedAt: String?
+)
+
+data class ItemBrief(
+    val id: Long,
+    val title: String,
+    val coverImage: String?
 )
 
 data class WishResponse(

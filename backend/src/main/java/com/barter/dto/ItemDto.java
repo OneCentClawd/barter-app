@@ -44,6 +44,24 @@ public class ItemDto {
         private Integer wishCount;
         private Boolean isWished;
         private LocalDateTime createdAt;
+        
+        // 交易信息（已交换的物品才有）
+        private TradeInfo tradeInfo;
+    }
+    
+    @Data
+    public static class TradeInfo {
+        private Long tradeRequestId;
+        private UserBrief previousOwner;      // 原主人
+        private ItemBrief tradedForItem;      // 用什么换来的
+        private LocalDateTime tradedAt;
+    }
+    
+    @Data
+    public static class ItemBrief {
+        private Long id;
+        private String title;
+        private String coverImage;
     }
     
     @Data

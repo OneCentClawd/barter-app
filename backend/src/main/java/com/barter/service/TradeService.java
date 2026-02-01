@@ -116,9 +116,31 @@ public class TradeService {
                 
                 // 双方都确认了才真正完成
                 if (tradeRequest.getRequesterConfirmed() && tradeRequest.getTargetConfirmed()) {
+                    Item targetItem = tradeRequest.getTargetItem();
+                    Item offeredItem = tradeRequest.getOfferedItem();
+                    User requester = tradeRequest.getRequester();
+                    User targetOwner = targetItem.getOwner();
+                    LocalDateTime now = LocalDateTime.now();
+                    
+                    // 记录原主人和交易信息
+                    targetItem.setPreviousOwner(targetOwner);
+                    targetItem.setTradedFromItem(offeredItem);
+                    targetItem.setTradeRequest(tradeRequest);
+                    targetItem.setTradedAt(now);
+                    
+                    offeredItem.setPreviousOwner(requester);
+                    offeredItem.setTradedFromItem(targetItem);
+                    offeredItem.setTradeRequest(tradeRequest);
+                    offeredItem.setTradedAt(now);
+                    
+                    // 转移所有权
+                    targetItem.setOwner(requester);      // 目标物品归发起者
+                    offeredItem.setOwner(targetOwner);   // 提供物品归目标方
+                    
                     // 将物品标记为已交换
-                    tradeRequest.getTargetItem().setStatus(Item.ItemStatus.TRADED);
-                    tradeRequest.getOfferedItem().setStatus(Item.ItemStatus.TRADED);
+                    targetItem.setStatus(Item.ItemStatus.TRADED);
+                    offeredItem.setStatus(Item.ItemStatus.TRADED);
+                    
                     tradeRequest.setStatus(TradeRequest.TradeStatus.COMPLETED);
                 }
                 tradeRequest.setUpdatedAt(LocalDateTime.now());

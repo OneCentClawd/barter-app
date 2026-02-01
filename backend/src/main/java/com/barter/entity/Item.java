@@ -47,6 +47,21 @@ public class Item {
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
+    
+    // 交易相关（交易完成后记录）
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "previous_owner_id")
+    private User previousOwner;  // 原主人
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "traded_from_item_id")
+    private Item tradedFromItem;  // 换来此物品所付出的物品
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "trade_request_id")
+    private TradeRequest tradeRequest;  // 关联的交易请求
+    
+    private LocalDateTime tradedAt;  // 交易完成时间
 
     public enum ItemCondition {
         NEW,        // 全新

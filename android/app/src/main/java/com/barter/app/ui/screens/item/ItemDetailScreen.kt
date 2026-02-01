@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import com.barter.app.BuildConfig
 import com.barter.app.ui.screens.main.home.DefaultItemImage
@@ -306,6 +307,95 @@ fun ItemDetailScreen(
                                 fontSize = 14.sp,
                                 color = Color.DarkGray
                             )
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                        
+                        // 交易信息（已交换的物品才显示）
+                        if (item.status == com.barter.app.data.model.ItemStatus.TRADED && item.tradeInfo != null) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFE8F5E9)
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(16.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.SwapHoriz,
+                                            contentDescription = null,
+                                            tint = Color(0xFF4CAF50),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "交换记录",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = Color(0xFF2E7D32)
+                                        )
+                                    }
+                                    
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    // 原主人
+                                    item.tradeInfo.previousOwner?.let { prevOwner ->
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "原主人：",
+                                                fontSize = 14.sp,
+                                                color = Color.Gray
+                                            )
+                                            Text(
+                                                text = prevOwner.nickname ?: prevOwner.username,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                    
+                                    // 用什么换来的
+                                    item.tradeInfo.tradedForItem?.let { tradedFor ->
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "换出物品：",
+                                                fontSize = 14.sp,
+                                                color = Color.Gray
+                                            )
+                                            val tradedForImage = tradedFor.coverImage?.let {
+                                                if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
+                                            }
+                                            AsyncImage(
+                                                model = tradedForImage,
+                                                contentDescription = null,
+                                                modifier = Modifier
+                                                    .size(32.dp)
+                                                    .clip(RoundedCornerShape(4.dp)),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(
+                                                text = tradedFor.title,
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.Medium
+                                            )
+                                        }
+                                    }
+                                    
+                                    // 交易时间
+                                    item.tradeInfo.tradedAt?.let { tradedAt ->
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = "交换时间：${tradedAt.take(10)}",
+                                            fontSize = 12.sp,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
                             Spacer(modifier = Modifier.height(16.dp))
                         }
 
