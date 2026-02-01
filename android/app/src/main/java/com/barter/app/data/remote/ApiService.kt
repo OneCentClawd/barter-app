@@ -176,4 +176,26 @@ interface ApiService {
 
     @POST("api/admin/config/allow-user-view-items")
     suspend fun setAllowUserViewItems(@Body request: AllowRequest): Response<ApiResponse<Unit>>
+    
+    // ========== 钱包 ==========
+    @GET("api/wallet")
+    suspend fun getWallet(): Response<ApiResponse<WalletInfo>>
+    
+    @POST("api/wallet/sign-in")
+    suspend fun signIn(): Response<ApiResponse<WalletTransaction>>
+    
+    @GET("api/wallet/transactions")
+    suspend fun getWalletTransactions(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<ApiResponse<PageResponse<WalletTransaction>>>
+    
+    @GET("api/wallet/credit")
+    suspend fun getCreditInfo(): Response<ApiResponse<CreditInfo>>
+    
+    @GET("api/wallet/credit/records")
+    suspend fun getCreditRecords(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<ApiResponse<PageResponse<CreditRecord>>>
 }

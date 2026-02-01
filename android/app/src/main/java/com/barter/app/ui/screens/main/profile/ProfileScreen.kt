@@ -35,7 +35,8 @@ fun ProfileScreen(
     onNavigateToMyItems: () -> Unit = {},
     onNavigateToMyTrades: () -> Unit = {},
     onNavigateToMyRatings: () -> Unit = {},
-    onNavigateToMyWishes: () -> Unit = {}
+    onNavigateToMyWishes: () -> Unit = {},
+    onNavigateToWallet: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -127,6 +128,12 @@ fun ProfileScreen(
             shape = RoundedCornerShape(16.dp)
         ) {
             Column {
+                ListItem(
+                    headlineContent = { Text("我的钱包") },
+                    leadingContent = { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null, tint = Color(0xFF4CAF50)) },
+                    modifier = Modifier.clickable { onNavigateToWallet() }
+                )
+                Divider()
                 ListItem(
                     headlineContent = { Text("我的收藏") },
                     leadingContent = { Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red) },

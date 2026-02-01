@@ -317,3 +317,45 @@ data class AllowUserChatRequest(
 data class AllowRequest(
     val allow: Boolean
 )
+
+// 钱包相关
+data class WalletInfo(
+    val points: Int,
+    val balance: Double,
+    val frozenPoints: Int,
+    val frozenBalance: Double,
+    val availablePoints: Int,
+    val availableBalance: Double
+)
+
+data class WalletTransaction(
+    val id: Long,
+    val type: String,
+    val pointsChange: Int?,
+    val balanceChange: Double?,
+    val description: String?,
+    val createdAt: String?
+)
+
+data class CreditInfo(
+    val creditScore: Int,
+    val level: String,
+    val levelName: String,
+    val depositRatio: Double,
+    val canRemoteTrade: Boolean,
+    val nextLevelScore: Int?
+)
+
+data class CreditRecord(
+    val id: Long,
+    val type: String,
+    val scoreChange: Int,
+    val scoreAfter: Int,
+    val description: String?,
+    val createdAt: String?
+)
+
+enum class TradeMode {
+    IN_PERSON,  // 面交
+    REMOTE      // 远程
+}

@@ -42,7 +42,8 @@ fun MainScreen(
     onNavigateToMyItems: () -> Unit = {},
     onNavigateToMyTrades: () -> Unit = {},
     onNavigateToMyRatings: () -> Unit = {},
-    onNavigateToMyWishes: () -> Unit = {}
+    onNavigateToMyWishes: () -> Unit = {},
+    onNavigateToWallet: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -124,7 +125,8 @@ fun MainScreen(
                     onNavigateToMyItems = onNavigateToMyItems,
                     onNavigateToMyTrades = onNavigateToMyTrades,
                     onNavigateToMyRatings = onNavigateToMyRatings,
-                    onNavigateToMyWishes = onNavigateToMyWishes
+                    onNavigateToMyWishes = onNavigateToMyWishes,
+                    onNavigateToWallet = onNavigateToWallet
                 )
             }
         }

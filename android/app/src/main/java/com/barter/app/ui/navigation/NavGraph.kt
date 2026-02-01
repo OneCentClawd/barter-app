@@ -25,6 +25,7 @@ import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
 import com.barter.app.ui.screens.profile.MyItemsScreen
 import com.barter.app.ui.screens.profile.MyRatingsScreen
+import com.barter.app.ui.screens.wallet.WalletScreen
 import com.barter.app.ui.screens.profile.MyTradesScreen
 import com.barter.app.ui.screens.profile.MyWishesScreen
 import com.barter.app.ui.screens.profile.UserProfileScreen
@@ -161,6 +162,9 @@ fun BarterNavGraph() {
                 },
                 onNavigateToMyWishes = {
                     navController.navigate(Screen.MyWishes.route)
+                },
+                onNavigateToWallet = {
+                    navController.navigate(Screen.Wallet.route)
                 }
             )
         }
@@ -358,6 +362,13 @@ fun BarterNavGraph() {
                 onNavigateToItemDetail = { itemId ->
                     navController.navigate(Screen.ItemDetail.createRoute(itemId))
                 }
+            )
+        }
+        
+        // 钱包
+        composable(Screen.Wallet.route) {
+            WalletScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
