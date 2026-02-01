@@ -295,7 +295,7 @@ private fun CreditCard(credit: com.barter.app.data.model.CreditInfo) {
             credit.nextLevelScore?.let { nextScore ->
                 Column {
                     LinearProgressIndicator(
-                        progress = { credit.creditScore.toFloat() / nextScore },
+                        progress = credit.creditScore.toFloat() / nextScore,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(8.dp),
