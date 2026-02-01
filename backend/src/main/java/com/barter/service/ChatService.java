@@ -1,7 +1,6 @@
 package com.barter.service;
 
 import com.barter.dto.ChatDto;
-import com.barter.dto.ItemDto;
 import com.barter.entity.Conversation;
 import com.barter.entity.Message;
 import com.barter.entity.User;

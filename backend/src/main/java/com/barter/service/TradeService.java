@@ -1,6 +1,5 @@
 package com.barter.service;
 
-import com.barter.dto.ItemDto;
 import com.barter.dto.TradeDto;
 import com.barter.entity.*;
 import com.barter.repository.*;

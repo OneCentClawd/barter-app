@@ -3,7 +3,6 @@ package com.barter.service;
 import com.barter.dto.AuthDto;
 import com.barter.entity.LoginRecord;
 import com.barter.entity.User;
-import com.barter.entity.WalletTransaction;
 import com.barter.repository.LoginRecordRepository;
 import com.barter.repository.UserRepository;
 import com.barter.security.JwtTokenProvider;

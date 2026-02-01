@@ -33,3 +33,4 @@ uploads/
 # Environment
 .env
 *.env.local
+.git.backup/
