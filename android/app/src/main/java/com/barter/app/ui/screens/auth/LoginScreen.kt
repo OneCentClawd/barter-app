@@ -1,8 +1,6 @@
 package com.barter.app.ui.screens.auth
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -124,68 +122,61 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 密码输入框（密码登录模式）
-        AnimatedVisibility(
-            visible = !useCodeLogin,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("密码") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                trailingIcon = {
-                    IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Icon(
-                            imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
-                            contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
-                        )
-                    }
-                }
-            )
-        }
-
-        // 验证码输入框（验证码登录模式）
-        AnimatedVisibility(
-            visible = useCodeLogin,
-            enter = fadeIn(),
-            exit = fadeOut()
-        ) {
-            OutlinedTextField(
-                value = verificationCode,
-                onValueChange = { if (it.length <= 6) verificationCode = it },
-                label = { Text("验证码") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !uiState.isLoading,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                placeholder = { Text("请输入6位验证码") },
-                trailingIcon = {
-                    TextButton(
-                        onClick = { 
-                            if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-                                onSendLoginCode(email)
-                            } else {
-                                localError = "请输入正确的邮箱地址"
-                            }
-                        },
-                        enabled = !uiState.isSendingCode && uiState.cooldownSeconds == 0 && email.isNotBlank()
-                    ) {
-                        if (uiState.isSendingCode) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                        } else if (uiState.cooldownSeconds > 0) {
-                            Text("${uiState.cooldownSeconds}s", fontSize = 12.sp)
-                        } else {
-                            Text(if (uiState.codeSent) "重新发送" else "获取验证码", fontSize = 12.sp)
+        // 使用 Crossfade 实现平滑切换
+        Crossfade(targetState = useCodeLogin, label = "login_mode") { isCodeLogin ->
+            if (!isCodeLogin) {
+                // 密码输入框
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("密码") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading,
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility,
+                                contentDescription = if (passwordVisible) "隐藏密码" else "显示密码"
+                            )
                         }
                     }
-                }
-            )
+                )
+            } else {
+                // 验证码输入框
+                OutlinedTextField(
+                    value = verificationCode,
+                    onValueChange = { if (it.length <= 6) verificationCode = it },
+                    label = { Text("验证码") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !uiState.isLoading,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    placeholder = { Text("请输入6位验证码") },
+                    trailingIcon = {
+                        TextButton(
+                            onClick = { 
+                                if (android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                                    onSendLoginCode(email)
+                                } else {
+                                    localError = "请输入正确的邮箱地址"
+                                }
+                            },
+                            enabled = !uiState.isSendingCode && uiState.cooldownSeconds == 0 && email.isNotBlank()
+                        ) {
+                            if (uiState.isSendingCode) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else if (uiState.cooldownSeconds > 0) {
+                                Text("${uiState.cooldownSeconds}s", fontSize = 12.sp)
+                            } else {
+                                Text(if (uiState.codeSent) "重新发送" else "获取验证码", fontSize = 12.sp)
+                            }
+                        }
+                    }
+                )
+            }
         }
 
         val error = uiState.error ?: localError
