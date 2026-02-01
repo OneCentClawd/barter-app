@@ -42,6 +42,9 @@ public class User {
 
     private Double rating = 5.0;
     private Integer ratingCount = 0;
+    
+    // 信用分系统
+    private Integer creditScore = 100;  // 初始信用分100
 
     // 用户设置
     private Boolean showPhoneToOthers = true;

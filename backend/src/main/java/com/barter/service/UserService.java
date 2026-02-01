@@ -38,6 +38,7 @@ public class UserService {
     private final LoginRecordRepository loginRecordRepository;
     private final UserRatingRepository userRatingRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CreditService creditService;
 
     @Value("${upload.path}")
     private String uploadPath;
@@ -218,6 +219,8 @@ public class UserService {
         response.setRating(user.getRating());
         response.setRatingCount(user.getRatingCount());
         response.setIsAdmin(user.getIsAdmin() != null && user.getIsAdmin());
+        response.setCreditScore(user.getCreditScore() != null ? user.getCreditScore() : 100);
+        response.setCreditLevel(creditService.getCreditLevel(user).getName());
         response.setCreatedAt(user.getCreatedAt());
         response.setSettings(toUserSettings(user));
 

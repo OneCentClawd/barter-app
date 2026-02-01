@@ -21,6 +21,8 @@ public class UserDto {
         private Integer itemCount;
         private Integer tradeCount;
         private Boolean isAdmin;
+        private Integer creditScore;        // 信用分
+        private String creditLevel;         // 信用等级
         private LocalDateTime createdAt;
         // 用户设置
         private UserSettings settings;
