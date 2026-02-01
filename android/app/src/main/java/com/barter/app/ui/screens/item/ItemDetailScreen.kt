@@ -71,7 +71,8 @@ fun ItemDetailScreen(
                     }
                 },
                 actions = {
-                    if (uiState.isOwner) {
+                    // 只有物主且物品未交换时才显示编辑和删除按钮
+                    if (uiState.isOwner && uiState.item?.status != com.barter.app.data.model.ItemStatus.TRADED) {
                         IconButton(onClick = { onNavigateToEditItem(itemId) }) {
                             Icon(Icons.Default.Edit, contentDescription = "编辑")
                         }

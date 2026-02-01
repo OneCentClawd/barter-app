@@ -87,6 +87,11 @@ public class ItemService {
         if (!item.getOwner().getId().equals(user.getId())) {
             throw new RuntimeException("无权修改此物品");
         }
+        
+        // 已交换的物品不能修改
+        if (item.getStatus() == Item.ItemStatus.TRADED) {
+            throw new RuntimeException("已交换的物品不能修改");
+        }
 
         if (request.getTitle() != null) item.setTitle(request.getTitle());
         if (request.getDescription() != null) item.setDescription(request.getDescription());
@@ -175,6 +180,11 @@ public class ItemService {
 
         if (!item.getOwner().getId().equals(user.getId())) {
             throw new RuntimeException("无权删除此物品");
+        }
+        
+        // 已交换的物品不能删除
+        if (item.getStatus() == Item.ItemStatus.TRADED) {
+            throw new RuntimeException("已交换的物品不能删除");
         }
 
         item.setStatus(Item.ItemStatus.REMOVED);
