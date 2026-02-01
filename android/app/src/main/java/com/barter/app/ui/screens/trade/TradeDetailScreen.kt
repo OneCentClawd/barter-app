@@ -19,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.res.painterResource
+import com.barter.app.R
 import com.barter.app.BuildConfig
 import com.barter.app.data.model.TradeMode
 import com.barter.app.data.model.TradeStatus
@@ -719,12 +722,14 @@ private fun ItemCard(
                 if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
             }
             AsyncImage(
-                model = fullImageUrl ?: "https://via.placeholder.com/140",
+                model = fullImageUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                contentScale = ContentScale.Crop
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(R.drawable.ic_image_placeholder),
+                error = painterResource(R.drawable.ic_image_placeholder)
             )
             Column(modifier = Modifier.padding(8.dp)) {
                 Text(title, fontWeight = FontWeight.Medium, maxLines = 1)
