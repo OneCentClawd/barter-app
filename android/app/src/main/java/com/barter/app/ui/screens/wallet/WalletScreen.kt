@@ -1,6 +1,7 @@
 package com.barter.app.ui.screens.wallet
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,8 @@ fun WalletScreen(
     viewModel: WalletViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showPointsRules by remember { mutableStateOf(false) }
+    var showCreditRules by remember { mutableStateOf(false) }
     
     LaunchedEffect(Unit) {
         viewModel.loadWalletData()
@@ -76,15 +79,10 @@ fun WalletScreen(
                         signedToday = uiState.wallet?.signedToday ?: false,
                         signInStreak = uiState.wallet?.signInStreak ?: 0,
                         nextSignInPoints = uiState.wallet?.nextSignInPoints ?: 1,
-                        onSignIn = { viewModel.signIn() }
+                        isSigningIn = uiState.isSigningIn,
+                        onSignIn = { viewModel.signIn() },
+                        onShowRules = { showPointsRules = true }
                     )
-                }
-                
-                // 信用分卡片
-                item {
-                    uiState.credit?.let { credit ->
-                        CreditCard(credit)
-                    }
                 }
                 
                 // 签到提示
@@ -113,6 +111,16 @@ fun WalletScreen(
                     }
                 }
                 
+                // 信用分卡片
+                item {
+                    uiState.credit?.let { credit ->
+                        CreditCard(
+                            credit = credit,
+                            onShowRules = { showCreditRules = true }
+                        )
+                    }
+                }
+                
                 // 最近记录
                 if (uiState.recentTransactions.isNotEmpty()) {
                     item {
@@ -130,6 +138,107 @@ fun WalletScreen(
             }
         }
     }
+    
+    // 积分规则弹窗
+    if (showPointsRules) {
+        AlertDialog(
+            onDismissRequest = { showPointsRules = false },
+            title = { Text("积分规则") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    RuleSection(
+                        title = "📅 签到获取",
+                        content = """
+                            • 每日签到可获得积分
+                            • 连续签到第N天获得N积分
+                            • 断签后重新从1开始
+                            • 连签天数不封顶
+                        """.trimIndent()
+                    )
+                    RuleSection(
+                        title = "💰 积分用途",
+                        content = """
+                            • 支付远程交换保证金
+                            • 100积分 = 1元
+                            • 优先使用积分抵扣
+                        """.trimIndent()
+                    )
+                    RuleSection(
+                        title = "🎁 其他获取方式",
+                        content = """
+                            • 完成交易获得奖励
+                            • 邀请好友注册
+                        """.trimIndent()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showPointsRules = false }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
+    
+    // 信用规则弹窗
+    if (showCreditRules) {
+        AlertDialog(
+            onDismissRequest = { showCreditRules = false },
+            title = { Text("信用系统说明") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    RuleSection(
+                        title = "🏆 信用等级",
+                        content = """
+                            • 新手（<60分）：仅限面交
+                            • 普通（60-150分）：可远程，100%保证金
+                            • 良好（151-300分）：可远程，50%保证金
+                            • 优秀（>300分）：可远程，免保证金
+                        """.trimIndent()
+                    )
+                    RuleSection(
+                        title = "⬆️ 提升信用分",
+                        content = """
+                            • 完成交易 +10分
+                            • 获得好评 +5分
+                            • 连续活跃 +2分/周
+                        """.trimIndent()
+                    )
+                    RuleSection(
+                        title = "⬇️ 扣减信用分",
+                        content = """
+                            • 交易违约 -30分
+                            • 收到差评 -10分
+                            • 取消交易 -5分
+                        """.trimIndent()
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCreditRules = false }) {
+                    Text("知道了")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun RuleSection(title: String, content: String) {
+    Column {
+        Text(
+            text = title,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = content,
+            fontSize = 13.sp,
+            color = Color.Gray,
+            lineHeight = 20.sp
+        )
+    }
 }
 
 @Composable
@@ -141,7 +250,9 @@ private fun WalletCard(
     signedToday: Boolean,
     signInStreak: Int,
     nextSignInPoints: Int,
-    onSignIn: () -> Unit
+    isSigningIn: Boolean,
+    onSignIn: () -> Unit,
+    onShowRules: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -160,6 +271,17 @@ private fun WalletCard(
                 )
                 .padding(20.dp)
         ) {
+            // 问号按钮
+            Icon(
+                imageVector = Icons.Default.HelpOutline,
+                contentDescription = "积分规则",
+                tint = Color.White.copy(alpha = 0.8f),
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .size(20.dp)
+                    .clickable { onShowRules() }
+            )
+            
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -234,9 +356,18 @@ private fun WalletCard(
                             containerColor = Color.White,
                             contentColor = Color(0xFF4CAF50)
                         ),
+                        enabled = !isSigningIn,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null)
+                        if (isSigningIn) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = Color(0xFF4CAF50)
+                            )
+                        } else {
+                            Icon(Icons.Default.CalendarToday, contentDescription = null)
+                        }
                         Spacer(modifier = Modifier.width(8.dp))
                         if (signInStreak > 0) {
                             Text("签到 +${nextSignInPoints}积分 · 连续${signInStreak}天")
@@ -251,7 +382,10 @@ private fun WalletCard(
 }
 
 @Composable
-private fun CreditCard(credit: com.barter.app.data.model.CreditInfo) {
+private fun CreditCard(
+    credit: com.barter.app.data.model.CreditInfo,
+    onShowRules: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)
@@ -263,11 +397,22 @@ private fun CreditCard(credit: com.barter.app.data.model.CreditInfo) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(
-                        text = "信用分",
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "信用分",
+                            color = Color.Gray,
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = "信用规则",
+                            tint = Color.Gray,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable { onShowRules() }
+                        )
+                    }
                     Text(
                         text = "${credit.creditScore}",
                         fontSize = 28.sp,

@@ -15,6 +15,7 @@ import javax.inject.Inject
 
 data class WalletUiState(
     val isLoading: Boolean = false,
+    val isSigningIn: Boolean = false,
     val wallet: WalletInfo? = null,
     val credit: CreditInfo? = null,
     val recentTransactions: List<WalletTransaction> = emptyList(),
@@ -66,21 +67,36 @@ class WalletViewModel @Inject constructor(
     
     fun signIn() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isSigningIn = true)
             try {
                 val response = apiService.signIn()
                 if (response.isSuccessful && response.body()?.success == true) {
-                    _uiState.value = _uiState.value.copy(
+                    // 只更新钱包信息，不触发全局 loading
+                    val walletResponse = apiService.getWallet()
+                    val transactionsResponse = apiService.getWalletTransactions(0, 5)
+                    
+                    var newState = _uiState.value.copy(
+                        isSigningIn = false,
                         signInMessage = response.body()?.message ?: "签到成功"
                     )
-                    // 刷新钱包数据
-                    loadWalletData()
+                    
+                    if (walletResponse.isSuccessful && walletResponse.body()?.success == true) {
+                        newState = newState.copy(wallet = walletResponse.body()?.data)
+                    }
+                    if (transactionsResponse.isSuccessful && transactionsResponse.body()?.success == true) {
+                        newState = newState.copy(recentTransactions = transactionsResponse.body()?.data?.content ?: emptyList())
+                    }
+                    
+                    _uiState.value = newState
                 } else {
                     _uiState.value = _uiState.value.copy(
+                        isSigningIn = false,
                         signInMessage = response.body()?.message ?: "签到失败"
                     )
                 }
             } catch (e: Exception) {
                 _uiState.value = _uiState.value.copy(
+                    isSigningIn = false,
                     signInMessage = "签到失败: ${e.message}"
                 )
             }
