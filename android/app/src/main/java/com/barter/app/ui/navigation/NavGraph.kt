@@ -23,6 +23,10 @@ import com.barter.app.ui.screens.item.EditItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
+import com.barter.app.ui.screens.profile.MyItemsScreen
+import com.barter.app.ui.screens.profile.MyRatingsScreen
+import com.barter.app.ui.screens.profile.MyTradesScreen
+import com.barter.app.ui.screens.profile.MyWishesScreen
 import com.barter.app.ui.screens.profile.UserProfileScreen
 import com.barter.app.ui.screens.admin.AdminSettingsScreen
 import com.barter.app.ui.screens.settings.LoginRecordsScreen
@@ -145,6 +149,18 @@ fun BarterNavGraph() {
                 },
                 onNavigateToSettings = {
                     navController.navigate(Screen.Settings.route)
+                },
+                onNavigateToMyItems = {
+                    navController.navigate(Screen.MyItems.route)
+                },
+                onNavigateToMyTrades = {
+                    navController.navigate(Screen.MyTrades.route)
+                },
+                onNavigateToMyRatings = {
+                    navController.navigate(Screen.MyRatings.route)
+                },
+                onNavigateToMyWishes = {
+                    navController.navigate(Screen.MyWishes.route)
                 }
             )
         }
@@ -301,6 +317,43 @@ fun BarterNavGraph() {
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChat = { uid ->
                     navController.navigate(Screen.NewChat.createRoute(uid))
+                }
+            )
+        }
+        
+        // 我的物品
+        composable(Screen.MyItems.route) {
+            MyItemsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToItemDetail = { itemId ->
+                    navController.navigate(Screen.ItemDetail.createRoute(itemId))
+                }
+            )
+        }
+        
+        // 我的交易
+        composable(Screen.MyTrades.route) {
+            MyTradesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTradeDetail = { tradeId ->
+                    navController.navigate(Screen.TradeDetail.createRoute(tradeId))
+                }
+            )
+        }
+        
+        // 我的评价
+        composable(Screen.MyRatings.route) {
+            MyRatingsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        // 我的收藏
+        composable(Screen.MyWishes.route) {
+            MyWishesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToItemDetail = { itemId ->
+                    navController.navigate(Screen.ItemDetail.createRoute(itemId))
                 }
             )
         }

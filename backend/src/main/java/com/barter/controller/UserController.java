@@ -91,4 +91,9 @@ public class UserController {
     public ApiResponse<List<UserDto.LoginRecordResponse>> getLoginRecords(@AuthenticationPrincipal User user) {
         return ApiResponse.success(userService.getLoginRecords(user));
     }
+    
+    @GetMapping("/me/ratings")
+    public ApiResponse<List<UserDto.UserRatingResponse>> getMyRatings(@AuthenticationPrincipal User user) {
+        return ApiResponse.success(userService.getMyRatings(user));
+    }
 }

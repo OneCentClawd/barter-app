@@ -248,6 +248,21 @@ public class UserService {
         List<LoginRecord> records = loginRecordRepository.findTop10ByUserOrderByLoginTimeDesc(user);
         return records.stream().map(this::toLoginRecordResponse).collect(Collectors.toList());
     }
+    
+    public List<UserDto.UserRatingResponse> getMyRatings(User user) {
+        List<UserRating> ratings = userRatingRepository.findByRatedUserOrderByCreatedAtDesc(user);
+        return ratings.stream().map(rating -> {
+            UserDto.UserRatingResponse response = new UserDto.UserRatingResponse();
+            response.setId(rating.getId());
+            response.setRaterId(rating.getRater().getId());
+            response.setRaterNickname(rating.getRater().getNickname());
+            response.setRaterAvatar(rating.getRater().getAvatar());
+            response.setRating(rating.getRating());
+            response.setComment(rating.getComment());
+            response.setCreatedAt(rating.getCreatedAt());
+            return response;
+        }).collect(Collectors.toList());
+    }
 
     private UserDto.LoginRecordResponse toLoginRecordResponse(LoginRecord record) {
         UserDto.LoginRecordResponse response = new UserDto.LoginRecordResponse();

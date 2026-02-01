@@ -256,6 +256,22 @@ data class Review(
     val createdAt: String?
 )
 
+data class Rating(
+    val id: Long,
+    val raterId: Long,
+    val raterNickname: String?,
+    val raterAvatar: String?,
+    val rating: Int,
+    val comment: String?,
+    val createdAt: String
+) {
+    // 为了 UI 使用方便，构造一个 rater 对象
+    val rater: UserBrief
+        get() = UserBrief(raterId, "", raterNickname, raterAvatar, null)
+    val score: Int
+        get() = rating
+}
+
 data class CreateReviewRequest(
     val tradeRequestId: Long,
     val rating: Int,

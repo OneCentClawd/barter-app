@@ -32,7 +32,11 @@ fun ProfileScreen(
     onNavigateToItemDetail: (Long) -> Unit,
     onNavigateToLogin: () -> Unit,
     onNavigateToEditProfile: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToMyItems: () -> Unit = {},
+    onNavigateToMyTrades: () -> Unit = {},
+    onNavigateToMyRatings: () -> Unit = {},
+    onNavigateToMyWishes: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -52,18 +56,34 @@ fun ProfileScreen(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 头像
+                // 头像 - 可点击进入编辑资料
                 val avatarUrl = uiState.avatar?.let {
                     if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
                 }
-                AsyncImage(
-                    model = avatarUrl ?: "https://via.placeholder.com/80",
-                    contentDescription = null,
+                Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop
-                )
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .clickable { onNavigateToEditProfile() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (avatarUrl != null) {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -95,14 +115,26 @@ fun ProfileScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 统计
+                // 统计 - 可点击
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    StatItem(label = "物品", value = uiState.itemCount.toString())
-                    StatItem(label = "交易", value = uiState.tradeCount.toString())
-                    StatItem(label = "评价", value = uiState.ratingCount.toString())
+                    StatItem(
+                        label = "物品",
+                        value = uiState.itemCount.toString(),
+                        onClick = onNavigateToMyItems
+                    )
+                    StatItem(
+                        label = "交易",
+                        value = uiState.tradeCount.toString(),
+                        onClick = onNavigateToMyTrades
+                    )
+                    StatItem(
+                        label = "评价",
+                        value = uiState.ratingCount.toString(),
+                        onClick = onNavigateToMyRatings
+                    )
                 }
             }
         }
@@ -116,17 +148,23 @@ fun ProfileScreen(
         ) {
             Column {
                 ListItem(
+                    headlineContent = { Text("我的收藏") },
+                    leadingContent = { Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red) },
+                    modifier = Modifier.clickable { onNavigateToMyWishes() }
+                )
+                HorizontalDivider()
+                ListItem(
                     headlineContent = { Text("编辑资料") },
                     leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
                     modifier = Modifier.clickable { onNavigateToEditProfile() }
                 )
-                Divider()
+                HorizontalDivider()
                 ListItem(
                     headlineContent = { Text("设置") },
                     leadingContent = { Icon(Icons.Default.Settings, contentDescription = null) },
                     modifier = Modifier.clickable { onNavigateToSettings() }
                 )
-                Divider()
+                HorizontalDivider()
                 ListItem(
                     headlineContent = { Text("退出登录", color = Color.Red) },
                     leadingContent = { Icon(Icons.Default.Logout, contentDescription = null, tint = Color.Red) },
@@ -140,12 +178,24 @@ fun ProfileScreen(
 
         // 我的物品
         Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "我的物品",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "我的物品",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Medium
+            )
+            if (uiState.myItems.isNotEmpty()) {
+                TextButton(onClick = onNavigateToMyItems) {
+                    Text("查看全部")
+                }
+            }
+        }
         Spacer(modifier = Modifier.height(8.dp))
 
         if (uiState.myItems.isEmpty()) {
@@ -173,12 +223,19 @@ fun ProfileScreen(
 }
 
 @Composable
-fun StatItem(label: String, value: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun StatItem(label: String, value: String, onClick: () -> Unit = {}) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() }
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
         Text(
             text = value,
             fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
         )
         Text(
             text = label,

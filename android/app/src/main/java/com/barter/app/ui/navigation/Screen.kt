@@ -31,6 +31,10 @@ sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object LoginRecords : Screen("login_records")
     object AdminSettings : Screen("admin_settings")
+    object MyItems : Screen("my_items")
+    object MyTrades : Screen("my_trades")
+    object MyRatings : Screen("my_ratings")
+    object MyWishes : Screen("my_wishes")
 }
 
 sealed class MainTab(val route: String, val title: String, val icon: String) {

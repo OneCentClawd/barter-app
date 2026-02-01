@@ -6,6 +6,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRatingRepository extends JpaRepository<UserRating, Long> {
@@ -13,6 +14,8 @@ public interface UserRatingRepository extends JpaRepository<UserRating, Long> {
     Optional<UserRating> findByRaterAndRatedUser(User rater, User ratedUser);
     
     Page<UserRating> findByRatedUserOrderByCreatedAtDesc(User ratedUser, Pageable pageable);
+    
+    List<UserRating> findByRatedUserOrderByCreatedAtDesc(User ratedUser);
     
     @Query("SELECT AVG(r.rating) FROM UserRating r WHERE r.ratedUser = :user")
     Double getAverageRating(User user);

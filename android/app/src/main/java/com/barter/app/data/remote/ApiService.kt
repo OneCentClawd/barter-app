@@ -40,6 +40,9 @@ interface ApiService {
 
     @GET("api/users/me/login-records")
     suspend fun getLoginRecords(): Response<ApiResponse<List<LoginRecord>>>
+    
+    @GET("api/users/me/ratings")
+    suspend fun getMyRatings(): Response<ApiResponse<List<Rating>>>
 
     @GET("api/users/{id}")
     suspend fun getUserProfile(@Path("id") userId: Long): Response<ApiResponse<PublicProfile>>
