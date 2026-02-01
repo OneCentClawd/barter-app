@@ -88,9 +88,9 @@ public class ItemService {
             throw new RuntimeException("无权修改此物品");
         }
         
-        // 已交换的物品不能修改
-        if (item.getStatus() == Item.ItemStatus.TRADED) {
-            throw new RuntimeException("已交换的物品不能修改");
+        // 只有可用状态的物品才能修改
+        if (item.getStatus() != Item.ItemStatus.AVAILABLE) {
+            throw new RuntimeException("只有可用状态的物品才能修改");
         }
 
         if (request.getTitle() != null) item.setTitle(request.getTitle());
@@ -182,9 +182,9 @@ public class ItemService {
             throw new RuntimeException("无权删除此物品");
         }
         
-        // 已交换的物品不能删除
-        if (item.getStatus() == Item.ItemStatus.TRADED) {
-            throw new RuntimeException("已交换的物品不能删除");
+        // 只有可用状态的物品才能删除
+        if (item.getStatus() != Item.ItemStatus.AVAILABLE) {
+            throw new RuntimeException("只有可用状态的物品才能删除");
         }
 
         item.setStatus(Item.ItemStatus.REMOVED);
