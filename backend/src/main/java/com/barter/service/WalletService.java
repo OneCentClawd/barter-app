@@ -23,7 +23,7 @@ public class WalletService {
     private final WalletTransactionRepository transactionRepository;
 
     // 签到积分：第1天1分，第2天2分...最高7分封顶
-    public static final int MAX_SIGN_IN_POINTS = 7;
+    // 连签积分不封顶
 
     /**
      * 获取或创建钱包
@@ -63,7 +63,7 @@ public class WalletService {
         }
         
         // 计算积分：第N天得N分，最高7分
-        int points = Math.min(streak, MAX_SIGN_IN_POINTS);
+        int points = streak;
         
         wallet.setPoints(wallet.getPoints() + points);
         wallet.setSignInStreak(streak);
@@ -99,7 +99,7 @@ public class WalletService {
         }
         
         // 下次签到能得多少分
-        int nextPoints = signedToday ? 0 : Math.min(streak + 1, MAX_SIGN_IN_POINTS);
+        int nextPoints = signedToday ? 0 : streak + 1;
         
         return new SignInInfo(signedToday, streak, nextPoints);
     }
