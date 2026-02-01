@@ -200,7 +200,7 @@ data class UpdateItemRequest(
 
 // 交换请求
 enum class TradeStatus {
-    PENDING, ACCEPTED, REJECTED, COMPLETED, CANCELLED
+    PENDING, ACCEPTED, DEPOSIT_PAID, SHIPPING, DELIVERED, COMPLETED, REJECTED, CANCELLED
 }
 
 data class TradeRequest(
@@ -212,17 +212,40 @@ data class TradeRequest(
     val status: TradeStatus,
     val requesterConfirmed: Boolean = false,
     val targetConfirmed: Boolean = false,
+    // 远程交易字段
+    val tradeMode: TradeMode? = null,
+    val estimatedValue: Double? = null,
+    val requesterTrackingNo: String? = null,
+    val targetTrackingNo: String? = null,
+    val requesterShippedAt: String? = null,
+    val targetShippedAt: String? = null,
+    val requesterDepositPaid: Boolean = false,
+    val targetDepositPaid: Boolean = false,
     val createdAt: String?
 )
 
 data class CreateTradeRequest(
     val targetItemId: Long,
     val offeredItemId: Long,
-    val message: String?
+    val message: String?,
+    val tradeMode: TradeMode? = null,
+    val estimatedValue: Double? = null
 )
 
 data class UpdateTradeStatusRequest(
     val status: TradeStatus
+)
+
+data class ShipRequest(
+    val trackingNo: String
+)
+
+data class DepositCalculation(
+    val totalAmount: Double,
+    val ratio: Double,
+    val pointsNeeded: Int,
+    val cashNeeded: Double,
+    val canAfford: Boolean
 )
 
 // 聊天

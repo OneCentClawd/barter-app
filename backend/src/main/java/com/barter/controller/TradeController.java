@@ -12,6 +12,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/trades")
 @RequiredArgsConstructor
@@ -53,5 +55,36 @@ public class TradeController {
             @AuthenticationPrincipal User user,
             @PageableDefault(size = 20) Pageable pageable) {
         return ApiResponse.success(tradeService.getReceivedRequests(user, pageable));
+    }
+    
+    /**
+     * 支付保证金（远程交易）
+     */
+    @PostMapping("/{id}/deposit")
+    public ApiResponse<TradeDto.TradeResponse> payDeposit(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success("保证金已支付", tradeService.payDeposit(id, user));
+    }
+    
+    /**
+     * 发货（上传物流单号）
+     */
+    @PostMapping("/{id}/ship")
+    public ApiResponse<TradeDto.TradeResponse> shipItem(
+            @PathVariable Long id,
+            @Valid @RequestBody TradeDto.ShipRequest request,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success("发货成功", tradeService.shipItem(id, request.getTrackingNo(), user));
+    }
+    
+    /**
+     * 计算保证金
+     */
+    @GetMapping("/deposit/calculate")
+    public ApiResponse<TradeDto.DepositCalculation> calculateDeposit(
+            @RequestParam BigDecimal estimatedValue,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success(tradeService.calculateDeposit(estimatedValue, user));
     }
 }

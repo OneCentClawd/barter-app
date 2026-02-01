@@ -138,6 +138,20 @@ interface ApiService {
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): Response<ApiResponse<PageResponse<TradeRequest>>>
+    
+    @POST("api/trades/{id}/deposit")
+    suspend fun payDeposit(@Path("id") tradeId: Long): Response<ApiResponse<TradeRequest>>
+    
+    @POST("api/trades/{id}/ship")
+    suspend fun shipItem(
+        @Path("id") tradeId: Long,
+        @Body request: ShipRequest
+    ): Response<ApiResponse<TradeRequest>>
+    
+    @GET("api/trades/deposit/calculate")
+    suspend fun calculateDeposit(
+        @Query("estimatedValue") estimatedValue: Double
+    ): Response<ApiResponse<DepositCalculation>>
 
     // ========== 聊天 ==========
     @POST("api/chat/send")

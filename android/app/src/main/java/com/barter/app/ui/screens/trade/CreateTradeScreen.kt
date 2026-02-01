@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,12 +17,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.barter.app.BuildConfig
 import com.barter.app.data.model.ItemListItem
+import com.barter.app.data.model.TradeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +37,8 @@ fun CreateTradeScreen(
     val uiState by viewModel.uiState.collectAsState()
     var selectedItem by remember { mutableStateOf<ItemListItem?>(null) }
     var message by remember { mutableStateOf("") }
+    var tradeMode by remember { mutableStateOf(TradeMode.IN_PERSON) }
+    var estimatedValue by remember { mutableStateOf("") }
 
     LaunchedEffect(targetItemId) {
         viewModel.loadData(targetItemId)
@@ -61,13 +66,21 @@ fun CreateTradeScreen(
                 Button(
                     onClick = {
                         selectedItem?.let { item ->
-                            viewModel.createTrade(targetItemId, item.id, message.ifBlank { null })
+                            viewModel.createTrade(
+                                targetItemId = targetItemId,
+                                offeredItemId = item.id,
+                                message = message.ifBlank { null },
+                                tradeMode = tradeMode,
+                                estimatedValue = if (tradeMode == TradeMode.REMOTE) 
+                                    estimatedValue.toDoubleOrNull() else null
+                            )
                         }
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    enabled = selectedItem != null && !uiState.isLoading
+                    enabled = selectedItem != null && !uiState.isLoading &&
+                            (tradeMode == TradeMode.IN_PERSON || estimatedValue.toDoubleOrNull() != null)
                 ) {
                     if (uiState.isLoading) {
                         CircularProgressIndicator(
@@ -197,6 +210,95 @@ fun CreateTradeScreen(
                                 }
                             }
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // 交易模式选择
+                    Text("交易方式", fontWeight = FontWeight.Medium, fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        FilterChip(
+                            selected = tradeMode == TradeMode.IN_PERSON,
+                            onClick = { tradeMode = TradeMode.IN_PERSON },
+                            label = { Text("面交") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Handshake,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                        
+                        FilterChip(
+                            selected = tradeMode == TradeMode.REMOTE,
+                            onClick = { tradeMode = TradeMode.REMOTE },
+                            label = { Text("远程") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.LocalShipping,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                    
+                    // 远程交易需要填估值
+                    if (tradeMode == TradeMode.REMOTE) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFFE3F2FD))
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = null,
+                                        tint = Color(0xFF1565C0),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "远程交换需要双方支付保证金",
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF1565C0)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    "保证金根据信用等级减免，交易完成后退还",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1565C0).copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = estimatedValue,
+                            onValueChange = { 
+                                if (it.isEmpty() || it.matches(Regex("^\\d*\\.?\\d{0,2}$"))) {
+                                    estimatedValue = it
+                                }
+                            },
+                            label = { Text("物品估值（元）") },
+                            placeholder = { Text("用于计算保证金") },
+                            modifier = Modifier.fillMaxWidth(),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            singleLine = true,
+                            leadingIcon = { Text("¥") }
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))

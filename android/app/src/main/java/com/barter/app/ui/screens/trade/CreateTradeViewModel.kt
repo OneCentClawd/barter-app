@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.barter.app.data.model.Item
 import com.barter.app.data.model.ItemListItem
+import com.barter.app.data.model.TradeMode
 import com.barter.app.data.repository.ItemRepository
 import com.barter.app.data.repository.Result
 import com.barter.app.data.repository.TradeRepository
@@ -66,11 +67,23 @@ class CreateTradeViewModel @Inject constructor(
         }
     }
 
-    fun createTrade(targetItemId: Long, offeredItemId: Long, message: String?) {
+    fun createTrade(
+        targetItemId: Long, 
+        offeredItemId: Long, 
+        message: String?,
+        tradeMode: TradeMode = TradeMode.IN_PERSON,
+        estimatedValue: Double? = null
+    ) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
 
-            when (val result = tradeRepository.createTrade(targetItemId, offeredItemId, message)) {
+            when (val result = tradeRepository.createTrade(
+                targetItemId = targetItemId, 
+                offeredItemId = offeredItemId, 
+                message = message,
+                tradeMode = tradeMode,
+                estimatedValue = estimatedValue
+            )) {
                 is Result.Success -> {
                     _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
                 }

@@ -16,11 +16,19 @@ class TradeRepository @Inject constructor(
     suspend fun createTrade(
         targetItemId: Long,
         offeredItemId: Long,
-        message: String?
+        message: String?,
+        tradeMode: TradeMode = TradeMode.IN_PERSON,
+        estimatedValue: Double? = null
     ): Result<TradeRequest> {
         return try {
             val response = apiService.createTrade(
-                CreateTradeRequest(targetItemId, offeredItemId, message)
+                CreateTradeRequest(
+                    targetItemId = targetItemId, 
+                    offeredItemId = offeredItemId, 
+                    message = message,
+                    tradeMode = tradeMode,
+                    estimatedValue = estimatedValue
+                )
             )
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.Success(response.body()!!.data!!)

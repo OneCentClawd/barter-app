@@ -21,30 +21,24 @@ public class TradeDeposit {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 保证金总额（物品估值）
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal amount;
-
     // 积分支付部分
     @Column(nullable = false)
-    private Integer pointsPaid = 0;
+    private Integer pointsAmount = 0;
 
     // 现金支付部分
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal cashPaid = BigDecimal.ZERO;
+    private BigDecimal cashAmount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DepositStatus status = DepositStatus.PENDING;
 
-    private LocalDateTime paidAt;
-    private LocalDateTime releasedAt;
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum DepositStatus {
         PENDING,    // 待支付
-        PAID,       // 已支付（冻结中）
-        RELEASED,   // 已释放（退还）
-        FORFEITED   // 已没收（赔偿给对方）
+        FROZEN,     // 已冻结
+        REFUNDED,   // 已退还
+        FORFEITED   // 已没收
     }
 }
