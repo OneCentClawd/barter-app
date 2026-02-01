@@ -152,19 +152,19 @@ fun ProfileScreen(
                     leadingContent = { Icon(Icons.Default.Favorite, contentDescription = null, tint = Color.Red) },
                     modifier = Modifier.clickable { onNavigateToMyWishes() }
                 )
-                HorizontalDivider()
+                Divider()
                 ListItem(
                     headlineContent = { Text("编辑资料") },
                     leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
                     modifier = Modifier.clickable { onNavigateToEditProfile() }
                 )
-                HorizontalDivider()
+                Divider()
                 ListItem(
                     headlineContent = { Text("设置") },
                     leadingContent = { Icon(Icons.Default.Settings, contentDescription = null) },
                     modifier = Modifier.clickable { onNavigateToSettings() }
                 )
-                HorizontalDivider()
+                Divider()
                 ListItem(
                     headlineContent = { Text("退出登录", color = Color.Red) },
                     leadingContent = { Icon(Icons.Default.Logout, contentDescription = null, tint = Color.Red) },
