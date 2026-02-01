@@ -2,7 +2,7 @@ package com.barter.app.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.barter.app.data.model.TradeListItem
+import com.barter.app.data.model.TradeRequest
 import com.barter.app.data.repository.Result
 import com.barter.app.data.repository.TradeRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +14,7 @@ import javax.inject.Inject
 
 data class MyTradesUiState(
     val isLoading: Boolean = false,
-    val trades: List<TradeListItem> = emptyList(),
+    val trades: List<TradeRequest> = emptyList(),
     val error: String? = null
 )
 

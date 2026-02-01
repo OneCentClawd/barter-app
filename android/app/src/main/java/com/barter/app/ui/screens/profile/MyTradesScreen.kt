@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.barter.app.BuildConfig
-import com.barter.app.data.model.TradeListItem
+import com.barter.app.data.model.TradeRequest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,7 +96,7 @@ fun MyTradesScreen(
 }
 
 @Composable
-private fun TradeCard(trade: TradeListItem, onClick: () -> Unit) {
+private fun TradeCard(trade: TradeRequest, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -105,13 +105,13 @@ private fun TradeCard(trade: TradeListItem, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             // 状态标签
-            val (statusText, statusColor) = when (trade.status) {
+            val (statusText, statusColor) = when (trade.status.name) {
                 "PENDING" -> "待处理" to Color(0xFFFF9800)
                 "ACCEPTED" -> "已接受" to Color(0xFF4CAF50)
                 "REJECTED" -> "已拒绝" to Color(0xFFF44336)
                 "COMPLETED" -> "已完成" to Color(0xFF2196F3)
                 "CANCELLED" -> "已取消" to Color.Gray
-                else -> trade.status to Color.Gray
+                else -> trade.status.name to Color.Gray
             }
             Surface(
                 color = statusColor.copy(alpha = 0.1f),
@@ -137,7 +137,7 @@ private fun TradeCard(trade: TradeListItem, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val myItemImage = trade.offeredItems.firstOrNull()?.images?.firstOrNull()?.let {
+                    val myItemImage = trade.offeredItem.coverImage?.let {
                         if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
                     }
                     AsyncImage(
@@ -150,7 +150,7 @@ private fun TradeCard(trade: TradeListItem, onClick: () -> Unit) {
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = trade.offeredItems.firstOrNull()?.title ?: "",
+                        text = trade.offeredItem.title,
                         fontSize = 12.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -169,7 +169,7 @@ private fun TradeCard(trade: TradeListItem, onClick: () -> Unit) {
                     modifier = Modifier.weight(1f),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val targetItemImage = trade.targetItem.images.firstOrNull()?.let {
+                    val targetItemImage = trade.targetItem.coverImage?.let {
                         if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
                     }
                     AsyncImage(
