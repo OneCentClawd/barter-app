@@ -23,8 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.barter.app.BuildConfig
+import com.barter.app.ui.screens.main.home.DefaultItemImage
 import com.barter.app.ui.components.AvatarImage
 import com.barter.app.ui.screens.main.home.getConditionColor
 import com.barter.app.ui.screens.main.home.getConditionText
@@ -155,11 +156,22 @@ fun ItemDetailScreen(
                                 val imageUrl = item.images[page].let {
                                     if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
                                 }
-                                AsyncImage(
+                                SubcomposeAsyncImage(
                                     model = imageUrl,
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Crop
+                                    contentScale = ContentScale.Crop,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator()
+                                        }
+                                    },
+                                    error = {
+                                        DefaultItemImage()
+                                    }
                                 )
                             }
                             // 指示器
@@ -185,14 +197,13 @@ fun ItemDetailScreen(
                             }
                         }
                     } else {
+                        // 没有图片时显示默认图片
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(1f)
-                                .background(Color.LightGray),
-                            contentAlignment = Alignment.Center
                         ) {
-                            Text("暂无图片")
+                            DefaultItemImage()
                         }
                     }
 

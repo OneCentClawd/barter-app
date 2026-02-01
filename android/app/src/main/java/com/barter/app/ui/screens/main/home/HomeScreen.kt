@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -21,7 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import com.barter.app.BuildConfig
 import com.barter.app.data.model.ItemCondition
 import com.barter.app.data.model.ItemListItem
@@ -131,7 +132,7 @@ fun ItemCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(Color.LightGray)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 if (item.coverImage != null) {
                     val imageUrl = if (item.coverImage.startsWith("http")) {
@@ -139,19 +140,31 @@ fun ItemCard(
                     } else {
                         BuildConfig.API_BASE_URL.trimEnd('/') + item.coverImage
                     }
-                    AsyncImage(
+                    SubcomposeAsyncImage(
                         model = imageUrl,
                         contentDescription = item.title,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            // 加载中显示
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        },
+                        error = {
+                            // 加载失败显示默认图片
+                            DefaultItemImage()
+                        }
                     )
                 } else {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("暂无图片", color = Color.Gray)
-                    }
+                    // 没有图片显示默认图片
+                    DefaultItemImage()
                 }
 
                 // 已交换/交易中遮罩
@@ -247,5 +260,30 @@ fun getConditionText(condition: ItemCondition): String {
         ItemCondition.GOOD -> "良好"
         ItemCondition.FAIR -> "一般"
         ItemCondition.POOR -> "较旧"
+    }
+}
+
+@Composable
+fun DefaultItemImage() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Default.Image,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "暂无图片",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            )
+        }
     }
 }
