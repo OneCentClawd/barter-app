@@ -29,3 +29,7 @@ nohup.out
 uploads/
 
 *.hprof
+
+# Environment
+.env
+*.env.local
