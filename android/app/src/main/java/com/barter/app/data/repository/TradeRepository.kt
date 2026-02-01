@@ -113,4 +113,36 @@ class TradeRepository @Inject constructor(
             Result.Error("获取收到的交换请求失败: ${e.message ?: "未知错误"}")
         }
     }
+    
+    suspend fun getMyTrades(page: Int = 0, size: Int = 20): Result<PageResponse<TradeRequest>> {
+        // 合并发送和收到的交易
+        return try {
+            val sentResult = getSentTrades(page, size)
+            val receivedResult = getReceivedTrades(page, size)
+            
+            val allTrades = mutableListOf<TradeRequest>()
+            if (sentResult is Result.Success) {
+                allTrades.addAll(sentResult.data.content)
+            }
+            if (receivedResult is Result.Success) {
+                allTrades.addAll(receivedResult.data.content)
+            }
+            
+            // 按时间排序并去重
+            val uniqueTrades = allTrades.distinctBy { it.id }.sortedByDescending { it.createdAt }
+            
+            Result.Success(PageResponse(
+                content = uniqueTrades,
+                totalPages = 1,
+                totalElements = uniqueTrades.size.toLong(),
+                size = size,
+                number = page,
+                first = page == 0,
+                last = true,
+                empty = uniqueTrades.isEmpty()
+            ))
+        } catch (e: Exception) {
+            Result.Error("获取交易记录失败: ${e.message ?: "未知错误"}")
+        }
+    }
 }
