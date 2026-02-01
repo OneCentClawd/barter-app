@@ -81,7 +81,8 @@ fun WalletScreen(
                         nextSignInPoints = uiState.wallet?.nextSignInPoints ?: 1,
                         isSigningIn = uiState.isSigningIn,
                         onSignIn = { viewModel.signIn() },
-                        onShowRules = { showPointsRules = true }
+                        onShowRules = { showPointsRules = true },
+                        onRecharge = { /* TODO: 跳转充值页面 */ }
                     )
                 }
                 
@@ -252,7 +253,8 @@ private fun WalletCard(
     nextSignInPoints: Int,
     isSigningIn: Boolean,
     onSignIn: () -> Unit,
-    onShowRules: () -> Unit
+    onShowRules: () -> Unit,
+    onRecharge: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -271,29 +273,30 @@ private fun WalletCard(
                 )
                 .padding(20.dp)
         ) {
-            // 问号按钮
-            Icon(
-                imageVector = Icons.Default.HelpOutline,
-                contentDescription = "积分规则",
-                tint = Color.White.copy(alpha = 0.8f),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .size(20.dp)
-                    .clickable { onShowRules() }
-            )
-            
             Column {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.Top
                 ) {
+                    // 积分
                     Column {
-                        Text(
-                            text = "积分",
-                            color = Color.White.copy(alpha = 0.8f),
-                            fontSize = 14.sp
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "积分",
+                                color = Color.White.copy(alpha = 0.8f),
+                                fontSize = 14.sp
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = Icons.Default.HelpOutline,
+                                contentDescription = "积分规则",
+                                tint = Color.White.copy(alpha = 0.6f),
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .clickable { onShowRules() }
+                            )
+                        }
                         Text(
                             text = "$points",
                             color = Color.White,
@@ -309,6 +312,7 @@ private fun WalletCard(
                         }
                     }
                     
+                    // 余额
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
                             text = "余额",
@@ -327,6 +331,22 @@ private fun WalletCard(
                                 color = Color.White.copy(alpha = 0.6f),
                                 fontSize = 12.sp
                             )
+                        }
+                        // 充值按钮
+                        Spacer(modifier = Modifier.height(4.dp))
+                        TextButton(
+                            onClick = onRecharge,
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text("充值", fontSize = 13.sp)
                         }
                     }
                 }
