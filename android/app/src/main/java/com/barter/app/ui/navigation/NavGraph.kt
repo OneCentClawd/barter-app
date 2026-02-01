@@ -322,7 +322,7 @@ fun BarterNavGraph() {
             route = Screen.UserProfile.route,
             arguments = listOf(navArgument("userId") { type = NavType.LongType })
         ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getLong("userId") ?: return@composable
+            backStackEntry.arguments?.getLong("userId") ?: return@composable
             UserProfileScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChat = { uid ->
