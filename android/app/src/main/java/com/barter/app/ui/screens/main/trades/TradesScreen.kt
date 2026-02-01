@@ -194,6 +194,9 @@ fun StatusChip(status: TradeStatus) {
     val (backgroundColor, textColor, text) = when (status) {
         TradeStatus.PENDING -> Triple(Color(0xFFFFF3E0), Color(0xFFFF9800), "待处理")
         TradeStatus.ACCEPTED -> Triple(Color(0xFFE3F2FD), Color(0xFF2196F3), "已接受")
+        TradeStatus.DEPOSIT_PAID -> Triple(Color(0xFFE8F5E9), Color(0xFF4CAF50), "已付保证金")
+        TradeStatus.SHIPPING -> Triple(Color(0xFFFFF8E1), Color(0xFFFFA000), "运输中")
+        TradeStatus.DELIVERED -> Triple(Color(0xFFE1F5FE), Color(0xFF03A9F4), "待确认收货")
         TradeStatus.REJECTED -> Triple(Color(0xFFFFEBEE), Color(0xFFF44336), "已拒绝")
         TradeStatus.COMPLETED -> Triple(Color(0xFFE8F5E9), Color(0xFF4CAF50), "已完成")
         TradeStatus.CANCELLED -> Triple(Color(0xFFFAFAFA), Color(0xFF9E9E9E), "已取消")
