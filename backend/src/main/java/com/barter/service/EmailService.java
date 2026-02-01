@@ -67,10 +67,12 @@ public class EmailService {
             message.setText(String.format(
                     "您好！\n\n您的验证码是：%s\n\n验证码有效期为%d分钟，请尽快完成注册。\n\n如非本人操作，请忽略此邮件。\n\n易物团队",
                     code, CODE_EXPIRY_MINUTES));
+            System.out.println("===EMAIL=== 准备发送邮件到: " + email + " 从: " + fromEmail);
             mailSender.send(message);
-            log.info("验证码已发送到: {}", email);
+            System.out.println("===EMAIL=== 验证码已发送到: " + email);
         } catch (Exception e) {
-            log.error("发送邮件失败: {}", e.getMessage());
+            System.err.println("===EMAIL ERROR=== " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
             throw new RuntimeException("发送验证码失败，请稍后重试");
         }
     }
