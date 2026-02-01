@@ -61,7 +61,7 @@ public class EmailService {
         // 发送邮件
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
+            message.setFrom("易物 <" + fromEmail + ">");
             message.setTo(email);
             message.setSubject("【易物】邮箱验证码");
             message.setText(String.format(
