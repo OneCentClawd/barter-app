@@ -145,7 +145,15 @@ data class Item(
     val owner: UserBrief,
     val images: List<String>?,
     val viewCount: Int?,
+    val wishCount: Int?,
+    val isWished: Boolean?,
     val createdAt: String?
+)
+
+data class WishResponse(
+    val itemId: Long,
+    val isWished: Boolean,
+    val wishCount: Int
 )
 
 data class ItemListItem(

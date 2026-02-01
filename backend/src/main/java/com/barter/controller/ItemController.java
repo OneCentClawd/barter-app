@@ -80,6 +80,20 @@ public class ItemController {
             @PathVariable Long id,
             @AuthenticationPrincipal User user) {
         itemService.deleteItem(id, user);
-        return ApiResponse.success("物品已下架", null);
+        return ApiResponse.success("物品已删除", null);
+    }
+    
+    @PostMapping("/{id}/wish")
+    public ApiResponse<ItemDto.WishResponse> toggleWish(
+            @PathVariable Long id,
+            @AuthenticationPrincipal User user) {
+        return ApiResponse.success(itemService.toggleWish(id, user));
+    }
+    
+    @GetMapping("/wishes")
+    public ApiResponse<Page<ItemDto.ItemListResponse>> getMyWishes(
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 20) Pageable pageable) {
+        return ApiResponse.success(itemService.getMyWishes(user, pageable));
     }
 }

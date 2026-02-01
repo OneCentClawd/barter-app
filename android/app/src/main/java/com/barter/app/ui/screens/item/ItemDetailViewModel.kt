@@ -18,6 +18,9 @@ data class ItemDetailUiState(
     val isLoading: Boolean = false,
     val item: Item? = null,
     val isOwner: Boolean = false,
+    val isWished: Boolean = false,
+    val wishCount: Int = 0,
+    val isDeleted: Boolean = false,
     val error: String? = null
 )
 
@@ -40,7 +43,47 @@ class ItemDetailViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         item = result.data,
-                        isOwner = result.data.owner.id == currentUserId
+                        isOwner = result.data.owner.id == currentUserId,
+                        isWished = result.data.isWished == true,
+                        wishCount = result.data.wishCount ?: 0
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = result.message
+                    )
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+    
+    fun toggleWish(itemId: Long) {
+        viewModelScope.launch {
+            when (val result = itemRepository.toggleWish(itemId)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isWished = result.data.isWished,
+                        wishCount = result.data.wishCount
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(error = result.message)
+                }
+                is Result.Loading -> {}
+            }
+        }
+    }
+    
+    fun deleteItem(itemId: Long) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            when (val result = itemRepository.deleteItem(itemId)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        isDeleted = true
                     )
                 }
                 is Result.Error -> {

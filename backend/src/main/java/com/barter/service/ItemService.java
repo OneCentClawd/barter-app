@@ -3,8 +3,10 @@ package com.barter.service;
 import com.barter.dto.ItemDto;
 import com.barter.entity.Item;
 import com.barter.entity.ItemImage;
+import com.barter.entity.ItemWish;
 import com.barter.entity.User;
 import com.barter.repository.ItemRepository;
+import com.barter.repository.ItemWishRepository;
 import com.barter.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +38,7 @@ import javax.imageio.stream.ImageOutputStream;
 public class ItemService {
 
     private final ItemRepository itemRepository;
+    private final ItemWishRepository itemWishRepository;
     private final UserRepository userRepository;
     private final SystemConfigService systemConfigService;
 
@@ -73,7 +76,7 @@ public class ItemService {
         }
 
         item = itemRepository.save(item);
-        return toItemResponse(item);
+        return toItemResponse(item, null);
     }
 
     @Transactional
@@ -94,7 +97,7 @@ public class ItemService {
         item.setUpdatedAt(LocalDateTime.now());
 
         item = itemRepository.save(item);
-        return toItemResponse(item);
+        return toItemResponse(item, user);
     }
 
     public ItemDto.ItemResponse getItem(Long id, User currentUser) {
@@ -117,7 +120,7 @@ public class ItemService {
         item.setViewCount(item.getViewCount() + 1);
         itemRepository.save(item);
 
-        return toItemResponse(item);
+        return toItemResponse(item, currentUser);
     }
 
     public Page<ItemDto.ItemListResponse> listItems(Pageable pageable, User currentUser) {
@@ -177,6 +180,37 @@ public class ItemService {
         item.setStatus(Item.ItemStatus.REMOVED);
         itemRepository.save(item);
     }
+    
+    @Transactional
+    public ItemDto.WishResponse toggleWish(Long itemId, User user) {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new RuntimeException("物品不存在"));
+        
+        ItemDto.WishResponse response = new ItemDto.WishResponse();
+        response.setItemId(itemId);
+        
+        // 检查是否已收藏
+        if (itemWishRepository.existsByUserAndItem(user, item)) {
+            // 取消收藏
+            itemWishRepository.deleteByUserAndItem(user, item);
+            response.setIsWished(false);
+        } else {
+            // 添加收藏
+            ItemWish wish = new ItemWish();
+            wish.setUser(user);
+            wish.setItem(item);
+            itemWishRepository.save(wish);
+            response.setIsWished(true);
+        }
+        
+        response.setWishCount(itemWishRepository.countByItem(item));
+        return response;
+    }
+    
+    public Page<ItemDto.ItemListResponse> getMyWishes(User user, Pageable pageable) {
+        return itemWishRepository.findByUserOrderByCreatedAtDesc(user, pageable)
+                .map(wish -> toItemListResponse(wish.getItem()));
+    }
 
     private String saveImage(MultipartFile file) {
         try {
@@ -233,7 +267,7 @@ public class ItemService {
         return dotIndex > 0 ? filename.substring(dotIndex) : ".jpg";
     }
 
-    private ItemDto.ItemResponse toItemResponse(Item item) {
+    private ItemDto.ItemResponse toItemResponse(Item item, User currentUser) {
         ItemDto.ItemResponse response = new ItemDto.ItemResponse();
         response.setId(item.getId());
         response.setTitle(item.getTitle());
@@ -247,6 +281,8 @@ public class ItemService {
                 item.getImages().stream().map(ItemImage::getImageUrl).collect(Collectors.toList()) :
                 new ArrayList<>());
         response.setViewCount(item.getViewCount());
+        response.setWishCount(itemWishRepository.countByItem(item));
+        response.setIsWished(currentUser != null && itemWishRepository.existsByUserAndItem(currentUser, item));
         response.setCreatedAt(item.getCreatedAt());
         return response;
     }

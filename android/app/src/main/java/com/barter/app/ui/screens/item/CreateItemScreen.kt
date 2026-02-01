@@ -44,6 +44,7 @@ fun CreateItemScreen(
     var wantedItems by remember { mutableStateOf("") }
     var selectedImages by remember { mutableStateOf<List<Uri>>(emptyList()) }
     var expanded by remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetMultipleContents()
@@ -68,16 +69,7 @@ fun CreateItemScreen(
                 },
                 actions = {
                     TextButton(
-                        onClick = {
-                            viewModel.createItem(
-                                title = title,
-                                description = description,
-                                category = category,
-                                condition = condition,
-                                wantedItems = wantedItems,
-                                imageUris = selectedImages
-                            )
-                        },
+                        onClick = { showConfirmDialog = true },
                         enabled = !uiState.isLoading && title.isNotBlank()
                     ) {
                         if (uiState.isLoading) {
@@ -240,6 +232,37 @@ fun CreateItemScreen(
                 )
             }
         }
+    }
+    
+    // 确认发布弹窗
+    if (showConfirmDialog) {
+        AlertDialog(
+            onDismissRequest = { showConfirmDialog = false },
+            title = { Text("确认发布") },
+            text = { Text("确定要发布「$title」吗？") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showConfirmDialog = false
+                        viewModel.createItem(
+                            title = title,
+                            description = description,
+                            category = category,
+                            condition = condition,
+                            wantedItems = wantedItems,
+                            imageUris = selectedImages
+                        )
+                    }
+                ) {
+                    Text("确定")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showConfirmDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }
 

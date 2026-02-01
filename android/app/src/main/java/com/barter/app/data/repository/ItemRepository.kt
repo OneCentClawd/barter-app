@@ -151,6 +151,32 @@ class ItemRepository @Inject constructor(
             Result.Error(e.message ?: "网络错误")
         }
     }
+    
+    suspend fun toggleWish(itemId: Long): Result<WishResponse> {
+        return try {
+            val response = apiService.toggleWish(itemId)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data!!)
+            } else {
+                Result.Error(response.body()?.message ?: "操作失败")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "网络错误")
+        }
+    }
+    
+    suspend fun getMyWishes(page: Int = 0, size: Int = 20): Result<PageResponse<ItemListItem>> {
+        return try {
+            val response = apiService.getMyWishes(page, size)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.Success(response.body()!!.data!!)
+            } else {
+                Result.Error(response.body()?.message ?: "获取收藏列表失败")
+            }
+        } catch (e: Exception) {
+            Result.Error(e.message ?: "网络错误")
+        }
+    }
 
     private fun uriToMultipartBodyPart(uri: Uri, partName: String): MultipartBody.Part? {
         return try {

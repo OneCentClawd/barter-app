@@ -37,9 +37,17 @@ fun ItemDetailScreen(
     onNavigateBack: () -> Unit,
     onNavigateToCreateTrade: (Long) -> Unit,
     onNavigateToUserProfile: (Long) -> Unit,
-    onNavigateToChat: (Long) -> Unit
+    onNavigateToChat: (Long) -> Unit,
+    onNavigateToEditItem: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) {
+            onNavigateBack()
+        }
+    }
 
     LaunchedEffect(itemId) {
         viewModel.loadItem(itemId)
@@ -52,6 +60,16 @@ fun ItemDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "返回")
+                    }
+                },
+                actions = {
+                    if (uiState.isOwner) {
+                        IconButton(onClick = { onNavigateToEditItem(itemId) }) {
+                            Icon(Icons.Default.Edit, contentDescription = "编辑")
+                        }
+                        IconButton(onClick = { showDeleteDialog = true }) {
+                            Icon(Icons.Default.Delete, contentDescription = "删除")
+                        }
                     }
                 }
             )
@@ -68,6 +86,16 @@ fun ItemDetailScreen(
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
+                        // 收藏按钮
+                        OutlinedButton(
+                            onClick = { viewModel.toggleWish(itemId) }
+                        ) {
+                            Icon(
+                                imageVector = if (uiState.isWished) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (uiState.isWished) Color.Red else Color.Gray
+                            )
+                        }
                         OutlinedButton(
                             onClick = { onNavigateToChat(uiState.item!!.owner.id) },
                             modifier = Modifier.weight(1f)
@@ -197,12 +225,30 @@ fun ItemDetailScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // 浏览量
-                        Text(
-                            text = "${item.viewCount ?: 0} 次浏览",
-                            fontSize = 14.sp,
-                            color = Color.Gray
-                        )
+                        // 浏览量和收藏量
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+                            Text(
+                                text = "${item.viewCount ?: 0} 次浏览",
+                                fontSize = 14.sp,
+                                color = Color.Gray
+                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Favorite,
+                                    contentDescription = null,
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "${uiState.wishCount} 人收藏",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -281,5 +327,30 @@ fun ItemDetailScreen(
                 }
             }
         }
+    }
+    
+    // 删除确认弹窗
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("确认删除") },
+            text = { Text("确定要删除「${uiState.item?.title}」吗？删除后无法恢复。") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deleteItem(itemId)
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                ) {
+                    Text("删除")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("取消")
+                }
+            }
+        )
     }
 }

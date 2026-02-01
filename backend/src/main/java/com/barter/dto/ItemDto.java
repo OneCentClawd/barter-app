@@ -41,7 +41,16 @@ public class ItemDto {
         private UserBrief owner;
         private List<String> images;
         private Integer viewCount;
+        private Integer wishCount;
+        private Boolean isWished;
         private LocalDateTime createdAt;
+    }
+    
+    @Data
+    public static class WishResponse {
+        private Long itemId;
+        private Boolean isWished;
+        private Integer wishCount;
     }
 
     @Data

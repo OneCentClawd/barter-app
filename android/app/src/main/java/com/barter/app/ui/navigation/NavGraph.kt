@@ -19,6 +19,7 @@ import com.barter.app.ui.screens.auth.RegisterViewModel
 import com.barter.app.ui.screens.chat.ChatScreen
 import com.barter.app.ui.screens.chat.NewChatScreen
 import com.barter.app.ui.screens.item.CreateItemScreen
+import com.barter.app.ui.screens.item.EditItemScreen
 import com.barter.app.ui.screens.item.ItemDetailScreen
 import com.barter.app.ui.screens.main.MainScreen
 import com.barter.app.ui.screens.profile.EditProfileScreen
@@ -165,6 +166,9 @@ fun BarterNavGraph() {
                 },
                 onNavigateToChat = { userId ->
                     navController.navigate(Screen.NewChat.createRoute(userId))
+                },
+                onNavigateToEditItem = { id ->
+                    navController.navigate(Screen.EditItem.createRoute(id))
                 }
             )
         }
@@ -174,6 +178,19 @@ fun BarterNavGraph() {
             CreateItemScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onItemCreated = { navController.popBackStack() }
+            )
+        }
+        
+        // 编辑物品
+        composable(
+            route = Screen.EditItem.route,
+            arguments = listOf(navArgument("itemId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getLong("itemId") ?: return@composable
+            EditItemScreen(
+                itemId = itemId,
+                onNavigateBack = { navController.popBackStack() },
+                onItemUpdated = { navController.popBackStack() }
             )
         }
 

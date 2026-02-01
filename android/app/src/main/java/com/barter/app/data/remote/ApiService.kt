@@ -101,6 +101,15 @@ interface ApiService {
 
     @DELETE("api/items/{id}")
     suspend fun deleteItem(@Path("id") itemId: Long): Response<ApiResponse<Unit>>
+    
+    @POST("api/items/{id}/wish")
+    suspend fun toggleWish(@Path("id") itemId: Long): Response<ApiResponse<WishResponse>>
+    
+    @GET("api/items/wishes")
+    suspend fun getMyWishes(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<ApiResponse<PageResponse<ItemListItem>>>
 
     // ========== 交换 ==========
     @POST("api/trades")
