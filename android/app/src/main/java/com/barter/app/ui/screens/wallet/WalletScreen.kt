@@ -73,6 +73,9 @@ fun WalletScreen(
                         balance = uiState.wallet?.balance ?: 0.0,
                         frozenPoints = uiState.wallet?.frozenPoints ?: 0,
                         frozenBalance = uiState.wallet?.frozenBalance ?: 0.0,
+                        signedToday = uiState.wallet?.signedToday ?: false,
+                        signInStreak = uiState.wallet?.signInStreak ?: 0,
+                        nextSignInPoints = uiState.wallet?.nextSignInPoints ?: 1,
                         onSignIn = { viewModel.signIn() }
                     )
                 }
@@ -135,6 +138,9 @@ private fun WalletCard(
     balance: Double,
     frozenPoints: Int,
     frozenBalance: Double,
+    signedToday: Boolean,
+    signInStreak: Int,
+    nextSignInPoints: Int,
     onSignIn: () -> Unit
 ) {
     Card(
@@ -205,17 +211,39 @@ private fun WalletCard(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                Button(
-                    onClick = onSignIn,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.White,
-                        contentColor = Color(0xFF4CAF50)
-                    ),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("每日签到 +5积分")
+                // 签到按钮
+                if (signedToday) {
+                    // 已签到
+                    Button(
+                        onClick = {},
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White.copy(alpha = 0.5f),
+                            contentColor = Color.White
+                        ),
+                        enabled = false,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("已签到 · 连续${signInStreak}天")
+                    }
+                } else {
+                    Button(
+                        onClick = onSignIn,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.White,
+                            contentColor = Color(0xFF4CAF50)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.CalendarToday, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        if (signInStreak > 0) {
+                            Text("签到 +${nextSignInPoints}积分 · 连续${signInStreak}天")
+                        } else {
+                            Text("签到 +${nextSignInPoints}积分")
+                        }
+                    }
                 }
             }
         }

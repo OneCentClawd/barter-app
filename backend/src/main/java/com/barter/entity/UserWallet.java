@@ -3,6 +3,7 @@ package com.barter.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -32,6 +33,13 @@ public class UserWallet {
     // 冻结现金（保证金占用）
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal frozenBalance = BigDecimal.ZERO;
+    
+    // 连续签到天数
+    @Column(nullable = false)
+    private Integer signInStreak = 0;
+    
+    // 上次签到日期
+    private LocalDate lastSignInDate;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();

@@ -32,6 +32,7 @@ public class WalletController {
     public ResponseEntity<ApiResponse<WalletDto.WalletResponse>> getWallet(
             @AuthenticationPrincipal User user) {
         UserWallet wallet = walletService.getOrCreateWallet(user);
+        WalletService.SignInInfo signInInfo = walletService.getSignInInfo(user);
 
         WalletDto.WalletResponse response = new WalletDto.WalletResponse();
         response.setPoints(wallet.getPoints());
@@ -40,6 +41,9 @@ public class WalletController {
         response.setFrozenBalance(wallet.getFrozenBalance());
         response.setAvailablePoints(wallet.getPoints() - wallet.getFrozenPoints());
         response.setAvailableBalance(wallet.getBalance().subtract(wallet.getFrozenBalance()));
+        response.setSignedToday(signInInfo.signedToday());
+        response.setSignInStreak(signInInfo.streak());
+        response.setNextSignInPoints(signInInfo.nextPoints());
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }
@@ -60,7 +64,7 @@ public class WalletController {
         response.setDescription(transaction.getDescription());
         response.setCreatedAt(transaction.getCreatedAt());
 
-        return ResponseEntity.ok(ApiResponse.success("签到成功，获得 " + WalletService.SIGN_IN_POINTS + " 积分", response));
+        return ResponseEntity.ok(ApiResponse.success(transaction.getDescription(), response));
     }
 
     /**

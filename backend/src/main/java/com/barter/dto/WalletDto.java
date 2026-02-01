@@ -18,6 +18,10 @@ public class WalletDto {
         private BigDecimal frozenBalance;   // 冻结现金
         private Integer availablePoints;    // 可用积分
         private BigDecimal availableBalance; // 可用现金
+        // 签到信息
+        private Boolean signedToday;        // 今天是否已签到
+        private Integer signInStreak;       // 连续签到天数
+        private Integer nextSignInPoints;   // 下次签到可得积分
     }
 
     @Data

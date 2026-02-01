@@ -348,7 +348,11 @@ data class WalletInfo(
     val frozenPoints: Int,
     val frozenBalance: Double,
     val availablePoints: Int,
-    val availableBalance: Double
+    val availableBalance: Double,
+    // 签到信息
+    val signedToday: Boolean = false,
+    val signInStreak: Int = 0,
+    val nextSignInPoints: Int = 1
 )
 
 data class WalletTransaction(

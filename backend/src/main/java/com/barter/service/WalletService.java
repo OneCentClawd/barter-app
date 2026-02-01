@@ -22,8 +22,8 @@ public class WalletService {
     private final UserWalletRepository walletRepository;
     private final WalletTransactionRepository transactionRepository;
 
-    // 签到奖励积分
-    public static final int SIGN_IN_POINTS = 5;
+    // 签到积分：第1天1分，第2天2分...最高7分封顶
+    public static final int MAX_SIGN_IN_POINTS = 7;
 
     /**
      * 获取或创建钱包
@@ -44,11 +44,30 @@ public class WalletService {
     @Transactional
     public WalletTransaction signIn(User user) {
         UserWallet wallet = getOrCreateWallet(user);
-
-        // 检查今天是否已签到（通过查最近的签到记录）
-        // 简化处理：直接加积分，前端控制每日一次
-
-        wallet.setPoints(wallet.getPoints() + SIGN_IN_POINTS);
+        LocalDate today = LocalDate.now();
+        LocalDate lastSignIn = wallet.getLastSignInDate();
+        
+        // 检查今天是否已签到
+        if (lastSignIn != null && lastSignIn.equals(today)) {
+            throw new RuntimeException("今天已经签到过了");
+        }
+        
+        // 计算连签天数
+        int streak = wallet.getSignInStreak();
+        if (lastSignIn != null && lastSignIn.equals(today.minusDays(1))) {
+            // 连续签到
+            streak = streak + 1;
+        } else {
+            // 断签，重新计算
+            streak = 1;
+        }
+        
+        // 计算积分：第N天得N分，最高7分
+        int points = Math.min(streak, MAX_SIGN_IN_POINTS);
+        
+        wallet.setPoints(wallet.getPoints() + points);
+        wallet.setSignInStreak(streak);
+        wallet.setLastSignInDate(today);
         wallet.setUpdatedAt(LocalDateTime.now());
         walletRepository.save(wallet);
 
@@ -56,12 +75,36 @@ public class WalletService {
         WalletTransaction transaction = new WalletTransaction();
         transaction.setUser(user);
         transaction.setType(WalletTransaction.TransactionType.SIGN_IN);
-        transaction.setPointsChange(SIGN_IN_POINTS);
+        transaction.setPointsChange(points);
         transaction.setPointsAfter(wallet.getPoints());
         transaction.setBalanceAfter(wallet.getBalance());
-        transaction.setDescription("每日签到奖励");
+        transaction.setDescription("连续签到第" + streak + "天，获得" + points + "积分");
         return transactionRepository.save(transaction);
     }
+    
+    /**
+     * 获取今日签到信息
+     */
+    public SignInInfo getSignInInfo(User user) {
+        UserWallet wallet = getOrCreateWallet(user);
+        LocalDate today = LocalDate.now();
+        LocalDate lastSignIn = wallet.getLastSignInDate();
+        
+        boolean signedToday = lastSignIn != null && lastSignIn.equals(today);
+        int streak = wallet.getSignInStreak();
+        
+        // 如果昨天没签到且今天也没签，连签要重置
+        if (!signedToday && (lastSignIn == null || !lastSignIn.equals(today.minusDays(1)))) {
+            streak = 0;
+        }
+        
+        // 下次签到能得多少分
+        int nextPoints = signedToday ? 0 : Math.min(streak + 1, MAX_SIGN_IN_POINTS);
+        
+        return new SignInInfo(signedToday, streak, nextPoints);
+    }
+    
+    public record SignInInfo(boolean signedToday, int streak, int nextPoints) {}
 
     /**
      * 充值
