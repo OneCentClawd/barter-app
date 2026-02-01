@@ -21,8 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import com.barter.app.BuildConfig
+import com.barter.app.ui.components.AvatarImage
 import com.barter.app.ui.screens.main.home.ItemCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,34 +55,15 @@ fun ProfileScreen(
                 modifier = Modifier.padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 头像 - 可点击进入编辑资料
-                val avatarUrl = uiState.avatar?.let {
-                    if (it.startsWith("http")) it else BuildConfig.API_BASE_URL.trimEnd('/') + it
-                }
-                Box(
-                    modifier = Modifier
-                        .size(80.dp)
-                        .clip(CircleShape)
-                        .background(MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onNavigateToEditProfile() },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (avatarUrl != null) {
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = null,
-                            modifier = Modifier.size(40.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
+                // 头像 - 使用 AvatarImage 组件
+                AvatarImage(
+                    avatarUrl = uiState.avatar,
+                    name = uiState.nickname ?: uiState.username ?: "用户",
+                    userId = uiState.userId ?: 0L,
+                    size = 80.dp,
+                    fontSize = 32.sp,
+                    onClick = { onNavigateToEditProfile() }
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
 

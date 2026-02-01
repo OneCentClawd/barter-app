@@ -17,6 +17,7 @@ import javax.inject.Inject
 
 data class ProfileUiState(
     val isLoading: Boolean = false,
+    val userId: Long? = null,
     val username: String? = null,
     val nickname: String? = null,
     val avatar: String? = null,
@@ -43,11 +44,13 @@ class ProfileViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             // 从本地获取基本信息
+            val userId = authRepository.getUserId().first()
             val username = authRepository.getUsername().first()
             val nickname = authRepository.getNickname().first()
             val avatar = authRepository.getAvatar().first()
 
             _uiState.value = _uiState.value.copy(
+                userId = userId,
                 username = username,
                 nickname = nickname,
                 avatar = avatar
