@@ -205,11 +205,14 @@ public class TradeService {
         double ratio = creditService.getDepositRatio(user);
         BigDecimal depositAmount = estimatedValue.multiply(BigDecimal.valueOf(ratio));
         
-        // 优先用积分，不足部分用现金（1积分 = 1元）
+        // 优先用积分，不足部分用现金（100积分 = 1元）
         UserWallet wallet = walletService.getOrCreateWallet(user);
         int availablePoints = wallet.getPoints() - wallet.getFrozenPoints();
-        int depositPoints = Math.min(availablePoints, depositAmount.intValue());
-        BigDecimal depositCash = depositAmount.subtract(BigDecimal.valueOf(depositPoints));
+        // 保证金需要多少积分（100积分=1元）
+        int depositPointsNeeded = depositAmount.multiply(BigDecimal.valueOf(100)).intValue();
+        int depositPoints = Math.min(availablePoints, depositPointsNeeded);
+        // 积分不够的部分用现金补
+        BigDecimal depositCash = depositAmount.subtract(BigDecimal.valueOf(depositPoints).divide(BigDecimal.valueOf(100)));
         
         // 冻结保证金
         walletService.freezeDeposit(user, depositPoints, depositCash, tradeId);
@@ -498,8 +501,10 @@ public class TradeService {
         int availablePoints = wallet.getPoints() - wallet.getFrozenPoints();
         BigDecimal availableCash = wallet.getBalance().subtract(wallet.getFrozenBalance());
         
-        int pointsNeeded = Math.min(availablePoints, depositAmount.intValue());
-        BigDecimal cashNeeded = depositAmount.subtract(BigDecimal.valueOf(pointsNeeded));
+        // 100积分 = 1元
+        int pointsNeededTotal = depositAmount.multiply(BigDecimal.valueOf(100)).intValue();
+        int pointsNeeded = Math.min(availablePoints, pointsNeededTotal);
+        BigDecimal cashNeeded = depositAmount.subtract(BigDecimal.valueOf(pointsNeeded).divide(BigDecimal.valueOf(100)));
         
         boolean canAfford = cashNeeded.compareTo(availableCash) <= 0;
         
