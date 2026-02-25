@@ -47,24 +47,28 @@ class NewChatViewModel @Inject constructor(
             currentUserId = tokenManager.userId.first() ?: 0
             
             webSocketManager.incomingMessages.collect { wsMessage ->
-                // 处理新消息（通过 senderId 判断是否是当前对话）
-                val msg = wsMessage.message ?: return@collect
-                if (wsMessage.type == "NEW_MESSAGE" && msg.senderId == targetUserId) {
-                    val newMessage = ChatMessage(
-                        id = msg.id,
-                        content = msg.content,
-                        isMe = msg.senderId == currentUserId,
-                        senderId = msg.senderId,
-                        senderName = msg.senderNickname ?: "用户",
-                        senderAvatar = msg.senderAvatar,
-                        createdAt = msg.createdAt
-                    )
-                    // 避免重复添加
-                    if (_uiState.value.messages.none { it.id == newMessage.id }) {
-                        _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages + newMessage,
-                            conversationId = wsMessage.conversationId
+                // 只处理 NEW_MESSAGE 类型
+                if (wsMessage.type == "NEW_MESSAGE") {
+                    val msg = wsMessage.message ?: return@collect
+                    // 通过 senderId 判断是否是当前对话
+                    if (msg.senderId == targetUserId) {
+                        val newMessage = ChatMessage(
+                            id = msg.id,
+                            content = msg.content,
+                            isMe = msg.senderId == currentUserId,
+                            senderId = msg.senderId,
+                            senderName = msg.senderNickname ?: "用户",
+                            senderAvatar = msg.senderAvatar,
+                            createdAt = msg.createdAt
                         )
+                        // 避免重复添加
+                        if (_uiState.value.messages.none { it.id == newMessage.id }) {
+                            _uiState.value = _uiState.value.copy(
+                                messages = _uiState.value.messages + newMessage,
+                                conversationId = wsMessage.conversationId,
+                                isOtherTyping = false // 收到消息时清除 typing 状态
+                            )
+                        }
                     }
                 }
             }
