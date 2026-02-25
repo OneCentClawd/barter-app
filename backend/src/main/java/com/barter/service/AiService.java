@@ -17,9 +17,12 @@ public class AiService {
     // 小狗的用户ID
     public static final Long PUPPY_USER_ID = 6L;
     
-    // Gateway 配置
-    private static final String GATEWAY_URL = "http://127.0.0.1:18789/v1/chat/completions";
-    private static final String GATEWAY_TOKEN = "022a9f9d27cfd96b983807ec9409a0da8ac2b22bf52e2d24";
+    // Gateway 配置 - 从配置文件读取
+    @Value("${ai.gateway.url}")
+    private String gatewayUrl;
+    
+    @Value("${ai.gateway.token}")
+    private String gatewayToken;
     
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -41,7 +44,7 @@ public class AiService {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(GATEWAY_TOKEN);
+            headers.setBearerAuth(gatewayToken);
 
             // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
@@ -67,7 +70,7 @@ public class AiService {
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
             
             ResponseEntity<String> response = restTemplate.exchange(
-                GATEWAY_URL,
+                gatewayUrl,
                 HttpMethod.POST,
                 request,
                 String.class

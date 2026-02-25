@@ -28,6 +28,7 @@ public class ChatService {
     private final ItemService itemService;
     private final SystemConfigService systemConfigService;
     private final AiService aiService;
+    private final AiReplyService aiReplyService;
     private final ChatWebSocketHandler webSocketHandler;
 
     @Transactional
@@ -77,7 +78,14 @@ public class ChatService {
 
         // 如果收件人是AI用户，异步生成AI回复
         if (aiService.isAiUser(receiver.getId())) {
-            generateAiReply(conversation, receiver, sender, request.getContent());
+            aiReplyService.generateAndSendReply(
+                    conversation.getId(),
+                    receiver.getId(),
+                    sender.getId(),
+                    receiver.getNickname(),
+                    receiver.getAvatar(),
+                    request.getContent()
+            );
         }
 
         return toMessageResponse(message);
@@ -104,37 +112,6 @@ public class ChatService {
                 .build();
         
         webSocketHandler.sendMessageToUser(userId, wsMessage);
-    }
-
-    /**
-     * 生成AI回复并存入数据库
-     */
-    private void generateAiReply(Conversation conversation, User aiUser, User humanUser, String userMessage) {
-        try {
-            // 获取AI回复
-            String aiReply = aiService.getAiResponse(userMessage, humanUser.getId());
-            
-            // 创建AI回复消息
-            Message aiMessage = new Message();
-            aiMessage.setConversation(conversation);
-            aiMessage.setSender(aiUser);
-            aiMessage.setContent(aiReply);
-            aiMessage.setType(Message.MessageType.TEXT);
-            aiMessage.setIsRead(false);
-            
-            aiMessage = messageRepository.save(aiMessage);
-            
-            // 更新对话的最后消息时间
-            conversation.setLastMessageAt(LocalDateTime.now());
-            conversationRepository.save(conversation);
-            
-            // 通过 WebSocket 推送 AI 回复给用户
-            pushMessageToUser(humanUser.getId(), conversation.getId(), aiMessage);
-            
-        } catch (Exception e) {
-            // AI回复失败，记录日志但不影响用户消息的发送
-            e.printStackTrace();
-        }
     }
 
     public Page<ChatDto.ConversationResponse> getConversations(User user, Pageable pageable) {
