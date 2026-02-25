@@ -3,6 +3,7 @@ package com.barter.app.ui.screens.chat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.barter.app.data.local.TokenManager
+import com.barter.app.data.remote.ChatWebSocketManager
 import com.barter.app.data.repository.ChatRepository
 import com.barter.app.data.repository.Result
 import com.barter.app.data.repository.UserRepository
@@ -21,25 +22,62 @@ data class NewChatUiState(
     val otherUserAvatar: String? = null,
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val conversationId: Long? = null
 )
 
 @HiltViewModel
 class NewChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
-    private val tokenManager: TokenManager
+    private val tokenManager: TokenManager,
+    private val webSocketManager: ChatWebSocketManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NewChatUiState())
     val uiState: StateFlow<NewChatUiState> = _uiState.asStateFlow()
 
     private var targetUserId: Long = 0
+    private var currentUserId: Long = 0
+    
+    init {
+        // 监听 WebSocket 消息
+        viewModelScope.launch {
+            currentUserId = tokenManager.userId.first() ?: 0
+            
+            webSocketManager.incomingMessages.collect { wsMessage ->
+                // 处理新消息（通过 senderId 判断是否是当前对话）
+                if (wsMessage.type == "NEW_MESSAGE" && wsMessage.message.senderId == targetUserId) {
+                    val newMessage = ChatMessage(
+                        id = wsMessage.message.id,
+                        content = wsMessage.message.content,
+                        isMe = wsMessage.message.senderId == currentUserId,
+                        senderId = wsMessage.message.senderId,
+                        senderName = wsMessage.message.senderNickname ?: "用户",
+                        senderAvatar = wsMessage.message.senderAvatar,
+                        createdAt = wsMessage.message.createdAt
+                    )
+                    // 避免重复添加
+                    if (_uiState.value.messages.none { it.id == newMessage.id }) {
+                        _uiState.value = _uiState.value.copy(
+                            messages = _uiState.value.messages + newMessage,
+                            conversationId = wsMessage.conversationId
+                        )
+                    }
+                }
+            }
+        }
+    }
 
     fun initChat(userId: Long) {
         targetUserId = userId
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, otherUserId = userId)
+            
+            // 连接 WebSocket
+            if (!webSocketManager.isConnected()) {
+                webSocketManager.connect()
+            }
 
             // 获取对方用户信息
             when (val result = userRepository.getProfile(userId)) {
@@ -71,7 +109,7 @@ class NewChatViewModel @Inject constructor(
                         id = result.data.id,
                         content = content,
                         isMe = true,
-                        senderId = 0L,
+                        senderId = currentUserId,
                         senderName = "我",
                         senderAvatar = null,
                         createdAt = java.time.LocalDateTime.now().toString()
@@ -80,6 +118,7 @@ class NewChatViewModel @Inject constructor(
                         isSending = false,
                         messages = _uiState.value.messages + newMessage
                     )
+                    // AI 回复会通过 WebSocket 推送过来
                 }
                 is Result.Error -> {
                     _uiState.value = _uiState.value.copy(

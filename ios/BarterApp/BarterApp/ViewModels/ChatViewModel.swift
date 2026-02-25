@@ -76,12 +76,58 @@ class ChatViewModel: ObservableObject {
                     createdAt: ISO8601DateFormatter().string(from: Date())
                 )
                 messages.append(newMessage)
+                
+                // 如果是给 AI 发消息，等待后刷新获取 AI 回复
+                if isAiUser(receiverId) {
+                    await fetchAiReply()
+                }
             }
         } catch {
             self.error = "发送失败"
         }
         
         isSending = false
+    }
+    
+    // AI 用户 ID（小狗）
+    private let aiUserIds: Set<Int64> = [6]
+    
+    private func isAiUser(_ userId: Int64) -> Bool {
+        return aiUserIds.contains(userId)
+    }
+    
+    private func fetchAiReply() async {
+        guard let convId = conversationId else { return }
+        
+        // 等待 AI 回复（最多重试 5 次，每次间隔 1 秒）
+        for _ in 0..<5 {
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 秒
+            
+            do {
+                let response = try await ApiService.shared.getConversationDetail(conversationId: convId)
+                if response.success, let data = response.data {
+                    let newMessages = data.messages.map { msg in
+                        ChatMessage(
+                            id: msg.id,
+                            content: msg.content,
+                            isMe: msg.senderId == currentUserId,
+                            senderId: msg.senderId,
+                            senderName: msg.senderNickname ?? "用户",
+                            senderAvatar: msg.senderAvatar,
+                            createdAt: msg.createdAt
+                        )
+                    }.sorted { ($0.createdAt ?? "") < ($1.createdAt ?? "") }
+                    
+                    // 如果有新消息（AI 回复了），更新列表
+                    if newMessages.count > messages.count {
+                        messages = newMessages
+                        return // 收到回复，停止轮询
+                    }
+                }
+            } catch {
+                // 继续重试
+            }
+        }
     }
 }
 
@@ -136,11 +182,64 @@ class NewChatViewModel: ObservableObject {
                     createdAt: ISO8601DateFormatter().string(from: Date())
                 )
                 messages.append(newMessage)
+                
+                // 如果是给 AI 发消息，等待后刷新获取 AI 回复
+                if isAiUser(receiverId) {
+                    await fetchAiReply()
+                }
             }
         } catch {
             self.error = "发送失败"
         }
         
         isSending = false
+    }
+    
+    // AI 用户 ID（小狗）
+    private let aiUserIds: Set<Int64> = [6]
+    
+    private func isAiUser(_ userId: Int64) -> Bool {
+        return aiUserIds.contains(userId)
+    }
+    
+    private func fetchAiReply() async {
+        guard let receiverId = targetUserId else { return }
+        
+        // 等待 AI 回复（最多重试 5 次，每次间隔 1 秒）
+        for _ in 0..<5 {
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 秒
+            
+            // 尝试获取会话列表找到对应会话
+            do {
+                let conversationsResponse = try await ApiService.shared.getConversations()
+                if conversationsResponse.success, let conversations = conversationsResponse.data {
+                    // 找到和 AI 的对话
+                    if let conv = conversations.first(where: { $0.otherUser?.id == receiverId }) {
+                        let detailResponse = try await ApiService.shared.getConversationDetail(conversationId: conv.id)
+                        if detailResponse.success, let data = detailResponse.data {
+                            let newMessages = data.messages.map { msg in
+                                ChatMessage(
+                                    id: msg.id,
+                                    content: msg.content,
+                                    isMe: msg.senderId == TokenManager.shared.userId,
+                                    senderId: msg.senderId,
+                                    senderName: msg.senderNickname ?? "用户",
+                                    senderAvatar: msg.senderAvatar,
+                                    createdAt: msg.createdAt
+                                )
+                            }.sorted { ($0.createdAt ?? "") < ($1.createdAt ?? "") }
+                            
+                            // 如果有新消息（AI 回复了），更新列表
+                            if newMessages.count > messages.count {
+                                messages = newMessages
+                                return // 收到回复，停止轮询
+                            }
+                        }
+                    }
+                }
+            } catch {
+                // 继续重试
+            }
+        }
     }
 }

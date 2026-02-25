@@ -7,12 +7,15 @@ import com.barter.entity.User;
 import com.barter.repository.ConversationRepository;
 import com.barter.repository.MessageRepository;
 import com.barter.repository.UserRepository;
+import com.barter.websocket.ChatWebSocketHandler;
+import com.barter.websocket.WebSocketMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +27,8 @@ public class ChatService {
     private final UserRepository userRepository;
     private final ItemService itemService;
     private final SystemConfigService systemConfigService;
+    private final AiService aiService;
+    private final ChatWebSocketHandler webSocketHandler;
 
     @Transactional
     public ChatDto.MessageResponse sendMessage(ChatDto.SendMessageRequest request, User sender) {
@@ -38,9 +43,10 @@ public class ChatService {
         boolean senderIsAdmin = sender.getIsAdmin() != null && sender.getIsAdmin();
         boolean receiverIsAdmin = receiver.getIsAdmin() != null && receiver.getIsAdmin();
         boolean allowUserChat = systemConfigService.isAllowUserChat();
+        boolean isAiChat = aiService.isAiUser(receiver.getId()) || aiService.isAiUser(sender.getId());
         
-        // 如果不允许用户间聊天，且双方都不是管理员，则拒绝
-        if (!allowUserChat && !senderIsAdmin && !receiverIsAdmin) {
+        // 如果不允许用户间聊天，且双方都不是管理员，且不是AI聊天，则拒绝
+        if (!allowUserChat && !senderIsAdmin && !receiverIsAdmin && !isAiChat) {
             throw new RuntimeException("目前只能与客服人员聊天");
         }
 
@@ -66,7 +72,69 @@ public class ChatService {
         conversation.setLastMessageAt(LocalDateTime.now());
         conversationRepository.save(conversation);
 
+        // 通过 WebSocket 推送给接收者
+        pushMessageToUser(receiver.getId(), conversation.getId(), message);
+
+        // 如果收件人是AI用户，异步生成AI回复
+        if (aiService.isAiUser(receiver.getId())) {
+            generateAiReply(conversation, receiver, sender, request.getContent());
+        }
+
         return toMessageResponse(message);
+    }
+
+    /**
+     * 通过 WebSocket 推送消息给用户
+     */
+    private void pushMessageToUser(Long userId, Long conversationId, Message message) {
+        WebSocketMessage wsMessage = WebSocketMessage.builder()
+                .type("NEW_MESSAGE")
+                .conversationId(conversationId)
+                .message(WebSocketMessage.MessagePayload.builder()
+                        .id(message.getId())
+                        .senderId(message.getSender().getId())
+                        .senderNickname(message.getSender().getNickname())
+                        .senderAvatar(message.getSender().getAvatar())
+                        .content(message.getContent())
+                        .type(message.getType().name())
+                        .isRead(message.getIsRead())
+                        .createdAt(message.getCreatedAt() != null ? 
+                                message.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) : null)
+                        .build())
+                .build();
+        
+        webSocketHandler.sendMessageToUser(userId, wsMessage);
+    }
+
+    /**
+     * 生成AI回复并存入数据库
+     */
+    private void generateAiReply(Conversation conversation, User aiUser, User humanUser, String userMessage) {
+        try {
+            // 获取AI回复
+            String aiReply = aiService.getAiResponse(userMessage, humanUser.getId());
+            
+            // 创建AI回复消息
+            Message aiMessage = new Message();
+            aiMessage.setConversation(conversation);
+            aiMessage.setSender(aiUser);
+            aiMessage.setContent(aiReply);
+            aiMessage.setType(Message.MessageType.TEXT);
+            aiMessage.setIsRead(false);
+            
+            aiMessage = messageRepository.save(aiMessage);
+            
+            // 更新对话的最后消息时间
+            conversation.setLastMessageAt(LocalDateTime.now());
+            conversationRepository.save(conversation);
+            
+            // 通过 WebSocket 推送 AI 回复给用户
+            pushMessageToUser(humanUser.getId(), conversation.getId(), aiMessage);
+            
+        } catch (Exception e) {
+            // AI回复失败，记录日志但不影响用户消息的发送
+            e.printStackTrace();
+        }
     }
 
     public Page<ChatDto.ConversationResponse> getConversations(User user, Pageable pageable) {
