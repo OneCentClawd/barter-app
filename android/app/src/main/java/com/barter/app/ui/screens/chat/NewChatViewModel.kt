@@ -23,7 +23,8 @@ data class NewChatUiState(
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
     val error: String? = null,
-    val conversationId: Long? = null
+    val conversationId: Long? = null,
+    val isOtherTyping: Boolean = false
 )
 
 @HiltViewModel
@@ -47,15 +48,16 @@ class NewChatViewModel @Inject constructor(
             
             webSocketManager.incomingMessages.collect { wsMessage ->
                 // 处理新消息（通过 senderId 判断是否是当前对话）
-                if (wsMessage.type == "NEW_MESSAGE" && wsMessage.message.senderId == targetUserId) {
+                val msg = wsMessage.message ?: return@collect
+                if (wsMessage.type == "NEW_MESSAGE" && msg.senderId == targetUserId) {
                     val newMessage = ChatMessage(
-                        id = wsMessage.message.id,
-                        content = wsMessage.message.content,
-                        isMe = wsMessage.message.senderId == currentUserId,
-                        senderId = wsMessage.message.senderId,
-                        senderName = wsMessage.message.senderNickname ?: "用户",
-                        senderAvatar = wsMessage.message.senderAvatar,
-                        createdAt = wsMessage.message.createdAt
+                        id = msg.id,
+                        content = msg.content,
+                        isMe = msg.senderId == currentUserId,
+                        senderId = msg.senderId,
+                        senderName = msg.senderNickname ?: "用户",
+                        senderAvatar = msg.senderAvatar,
+                        createdAt = msg.createdAt
                     )
                     // 避免重复添加
                     if (_uiState.value.messages.none { it.id == newMessage.id }) {
@@ -64,6 +66,15 @@ class NewChatViewModel @Inject constructor(
                             conversationId = wsMessage.conversationId
                         )
                     }
+                }
+            }
+        }
+        
+        // 监听 typing 状态
+        viewModelScope.launch {
+            webSocketManager.typingState.collect { event ->
+                if (event.userId == targetUserId) {
+                    _uiState.value = _uiState.value.copy(isOtherTyping = event.isTyping)
                 }
             }
         }
