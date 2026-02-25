@@ -211,16 +211,21 @@ fun MessageBubble(
 
 private fun formatMessageTime(timeStr: String): String {
     return try {
+        // 解析时间字符串（服务器返回的是 UTC 时间）
         val dateTime = java.time.LocalDateTime.parse(timeStr.replace(" ", "T").take(19))
+        // 将 UTC 时间转换为本地时间
+        val utcZoned = dateTime.atZone(java.time.ZoneId.of("UTC"))
+        val localDateTime = utcZoned.withZoneSameInstant(java.time.ZoneId.systemDefault()).toLocalDateTime()
+        
         val now = java.time.LocalDateTime.now()
         val today = now.toLocalDate()
-        val messageDate = dateTime.toLocalDate()
+        val messageDate = localDateTime.toLocalDate()
         
         when {
-            messageDate == today -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-            messageDate == today.minusDays(1) -> "昨天 " + dateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
-            messageDate.year == today.year -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"))
-            else -> dateTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+            messageDate == today -> localDateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            messageDate == today.minusDays(1) -> "昨天 " + localDateTime.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"))
+            messageDate.year == today.year -> localDateTime.format(java.time.format.DateTimeFormatter.ofPattern("MM-dd HH:mm"))
+            else -> localDateTime.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
         }
     } catch (e: Exception) {
         timeStr.take(16).replace("T", " ")
