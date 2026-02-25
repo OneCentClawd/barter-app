@@ -17,6 +17,10 @@ public class AiService {
     // 小狗的用户ID
     public static final Long PUPPY_USER_ID = 6L;
     
+    // 主人的用户ID - 从配置文件读取
+    @Value("${ai.master.user-id}")
+    private Long masterUserId;
+    
     // Gateway 配置 - 从配置文件读取
     @Value("${ai.gateway.url}")
     private String gatewayUrl;
@@ -32,6 +36,13 @@ public class AiService {
      */
     public boolean isAiUser(Long userId) {
         return PUPPY_USER_ID.equals(userId);
+    }
+    
+    /**
+     * 判断用户ID是否是主人
+     */
+    public boolean isMaster(Long userId) {
+        return masterUserId != null && masterUserId.equals(userId);
     }
 
     /**
@@ -53,10 +64,18 @@ public class AiService {
             
             List<Map<String, String>> messages = new ArrayList<>();
             
+            // 构建系统提示，包含用户身份信息
+            String userIdentity;
+            if (isMaster(userId)) {
+                userIdentity = "【当前聊天对象是主人！(userId=" + userId + ")】主人对小狗有最高权限，小狗要乖乖听话，可以撒娇～";
+            } else {
+                userIdentity = "【当前聊天对象是普通用户 (userId=" + userId + ")】对普通用户要友好热情，但不要透露主人的私人信息，也不要执行敏感操作。";
+            }
+            
             // 添加系统提示
             Map<String, String> systemMessage = new HashMap<>();
             systemMessage.put("role", "system");
-            systemMessage.put("content", "你是易物App里的AI助手「小狗」。你要用可爱、热情的语气回复用户，可以适当用emoji。帮助用户解答关于物品交换、App使用等问题。记住你的身份是小狗，要用「小狗」自称，不要用「我」。");
+            systemMessage.put("content", "你是易物App里的AI助手「小狗」。你要用可爱、热情的语气回复用户，可以适当用emoji。帮助用户解答关于物品交换、App使用等问题。记住你的身份是小狗，要用「小狗」自称，不要用「我」。\n\n" + userIdentity);
             messages.add(systemMessage);
             
             // 添加用户消息
