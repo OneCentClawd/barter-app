@@ -113,10 +113,8 @@ class ChatViewModel @Inject constructor(
             currentUserId = tokenManager.userId.first() ?: 0
             _uiState.value = _uiState.value.copy(isLoading = true)
             
-            // 连接 WebSocket
-            if (!webSocketManager.isConnected()) {
-                webSocketManager.connect()
-            }
+            // 确保 WebSocket 连接（会自动处理重连）
+            webSocketManager.ensureConnected()
 
             when (val result = chatRepository.getConversationDetail(conversationId)) {
                 is Result.Success -> {

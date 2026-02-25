@@ -5,6 +5,7 @@ import com.barter.app.data.local.TokenManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -14,6 +15,8 @@ import okhttp3.*
 import org.json.JSONObject
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.min
+import kotlin.math.pow
 
 data class WebSocketChatMessage(
     val type: String,
@@ -53,11 +56,19 @@ class ChatWebSocketManager @Inject constructor(
     private val _incomingMessages = MutableSharedFlow<WebSocketChatMessage>()
     val incomingMessages: SharedFlow<WebSocketChatMessage> = _incomingMessages.asSharedFlow()
     
-    private val _connectionState = MutableSharedFlow<ConnectionState>()
+    private val _connectionState = MutableSharedFlow<ConnectionState>(replay = 1)
     val connectionState: SharedFlow<ConnectionState> = _connectionState.asSharedFlow()
     
     private val _typingState = MutableSharedFlow<TypingEvent>()
     val typingState: SharedFlow<TypingEvent> = _typingState.asSharedFlow()
+    
+    // 重连相关
+    private var reconnectAttempts = 0
+    private val maxReconnectAttempts = 10
+    private val baseDelayMs = 1000L
+    private val maxDelayMs = 30000L
+    private var isReconnecting = false
+    private var manualDisconnect = false
     
     data class TypingEvent(
         val conversationId: Long,
@@ -67,10 +78,18 @@ class ChatWebSocketManager @Inject constructor(
     )
     
     enum class ConnectionState {
-        CONNECTED, DISCONNECTED, CONNECTING, ERROR
+        CONNECTED, DISCONNECTED, CONNECTING, RECONNECTING, ERROR
     }
     
     fun connect() {
+        // 防止重复连接
+        if (isConnected() || isReconnecting) {
+            Log.d(TAG, "Already connected or reconnecting, skip connect()")
+            return
+        }
+        
+        manualDisconnect = false
+        
         scope.launch {
             val token = tokenManager.token.first() ?: return@launch
             
@@ -86,6 +105,8 @@ class ChatWebSocketManager @Inject constructor(
             webSocket = client.newWebSocket(request, object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
                     Log.d(TAG, "WebSocket connected")
+                    reconnectAttempts = 0  // 重置重连计数
+                    isReconnecting = false
                     scope.launch { _connectionState.emit(ConnectionState.CONNECTED) }
                 }
                 
@@ -155,14 +176,68 @@ class ChatWebSocketManager @Inject constructor(
                 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                     Log.d(TAG, "WebSocket closed: $code $reason")
-                    scope.launch { _connectionState.emit(ConnectionState.DISCONNECTED) }
+                    this@ChatWebSocketManager.webSocket = null
+                    scope.launch { 
+                        _connectionState.emit(ConnectionState.DISCONNECTED)
+                        // 非主动断开时尝试重连
+                        if (!manualDisconnect) {
+                            scheduleReconnect()
+                        }
+                    }
                 }
                 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     Log.e(TAG, "WebSocket failure", t)
-                    scope.launch { _connectionState.emit(ConnectionState.ERROR) }
+                    this@ChatWebSocketManager.webSocket = null
+                    scope.launch { 
+                        _connectionState.emit(ConnectionState.ERROR)
+                        // 连接失败时尝试重连
+                        if (!manualDisconnect) {
+                            scheduleReconnect()
+                        }
+                    }
                 }
             })
+        }
+    }
+    
+    /**
+     * 安排重连（指数退避）
+     */
+    private fun scheduleReconnect() {
+        if (reconnectAttempts >= maxReconnectAttempts) {
+            Log.w(TAG, "Max reconnect attempts reached, giving up")
+            isReconnecting = false
+            return
+        }
+        
+        if (isReconnecting) {
+            Log.d(TAG, "Already scheduling reconnect, skip")
+            return
+        }
+        
+        isReconnecting = true
+        val delayMs = min(baseDelayMs * 2.0.pow(reconnectAttempts.toDouble()).toLong(), maxDelayMs)
+        reconnectAttempts++
+        
+        Log.d(TAG, "Scheduling reconnect in ${delayMs}ms (attempt $reconnectAttempts)")
+        
+        scope.launch {
+            _connectionState.emit(ConnectionState.RECONNECTING)
+            delay(delayMs)
+            isReconnecting = false
+            connect()
+        }
+    }
+    
+    /**
+     * 确保连接（进入聊天页面时调用）
+     */
+    fun ensureConnected() {
+        if (!isConnected() && !isReconnecting) {
+            Log.d(TAG, "Connection not active, connecting...")
+            reconnectAttempts = 0  // 重置计数，允许新一轮重连
+            connect()
         }
     }
     
@@ -192,6 +267,9 @@ class ChatWebSocketManager @Inject constructor(
     }
     
     fun disconnect() {
+        manualDisconnect = true
+        reconnectAttempts = 0
+        isReconnecting = false
         webSocket?.close(1000, "User disconnected")
         webSocket = null
     }

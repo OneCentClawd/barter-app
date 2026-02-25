@@ -89,10 +89,8 @@ class NewChatViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, otherUserId = userId)
             
-            // 连接 WebSocket
-            if (!webSocketManager.isConnected()) {
-                webSocketManager.connect()
-            }
+            // 确保 WebSocket 连接（会自动处理重连）
+            webSocketManager.ensureConnected()
 
             // 获取对方用户信息
             when (val result = userRepository.getProfile(userId)) {
