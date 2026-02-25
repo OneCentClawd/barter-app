@@ -76,6 +76,63 @@ fun ChatScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // 连接状态提示条
+            when (uiState.connectionStatus) {
+                ConnectionStatus.DISCONNECTED, ConnectionStatus.RECONNECTING -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFFFA000))
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = if (uiState.connectionStatus == ConnectionStatus.RECONNECTING) 
+                                "连接已断开，正在重连..." else "连接已断开",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                ConnectionStatus.FAILED -> {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFFD32F2F))
+                            .clickable { viewModel.retryConnection() }
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "连接失败，点击重试",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                ConnectionStatus.CONNECTED -> {
+                    // 显示"已恢复连接"提示
+                    if (uiState.showConnectionRestored) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF4CAF50))
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "已恢复连接",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+                        }
+                    }
+                }
+            }
+            
             // 消息列表
             LazyColumn(
                 modifier = Modifier

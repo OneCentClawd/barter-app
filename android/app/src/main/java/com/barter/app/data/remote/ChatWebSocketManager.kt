@@ -78,7 +78,7 @@ class ChatWebSocketManager @Inject constructor(
     )
     
     enum class ConnectionState {
-        CONNECTED, DISCONNECTED, CONNECTING, RECONNECTING, ERROR
+        CONNECTED, DISCONNECTED, CONNECTING, RECONNECTING, ERROR, FAILED
     }
     
     fun connect() {
@@ -208,6 +208,7 @@ class ChatWebSocketManager @Inject constructor(
         if (reconnectAttempts >= maxReconnectAttempts) {
             Log.w(TAG, "Max reconnect attempts reached, giving up")
             isReconnecting = false
+            scope.launch { _connectionState.emit(ConnectionState.FAILED) }
             return
         }
         

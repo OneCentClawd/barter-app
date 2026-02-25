@@ -7,6 +7,7 @@ import com.barter.app.data.remote.ChatWebSocketManager
 import com.barter.app.data.repository.ChatRepository
 import com.barter.app.data.repository.Result
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +25,10 @@ data class ChatMessage(
     val createdAt: String?
 )
 
+enum class ConnectionStatus {
+    CONNECTED, DISCONNECTED, RECONNECTING, FAILED
+}
+
 data class ChatUiState(
     val messages: List<ChatMessage> = emptyList(),
     val otherUserName: String? = null,
@@ -32,7 +37,9 @@ data class ChatUiState(
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
     val error: String? = null,
-    val isOtherTyping: Boolean = false
+    val isOtherTyping: Boolean = false,
+    val connectionStatus: ConnectionStatus = ConnectionStatus.CONNECTED,
+    val showConnectionRestored: Boolean = false
 )
 
 @HiltViewModel
@@ -48,6 +55,7 @@ class ChatViewModel @Inject constructor(
     private var conversationId: Long = 0
     private var currentUserId: Long = 0
     private var lastTypingSent: Long = 0
+    private var wasDisconnected: Boolean = false
     
     init {
         // 监听 WebSocket 消息
@@ -84,6 +92,49 @@ class ChatViewModel @Inject constructor(
                 }
             }
         }
+        
+        // 监听连接状态
+        viewModelScope.launch {
+            webSocketManager.connectionState.collect { state ->
+                val newStatus = when (state) {
+                    ChatWebSocketManager.ConnectionState.CONNECTED -> {
+                        // 如果之前断开过，显示"已恢复连接"
+                        if (wasDisconnected) {
+                            wasDisconnected = false
+                            _uiState.value = _uiState.value.copy(showConnectionRestored = true)
+                            // 2秒后自动隐藏
+                            launch {
+                                delay(2000)
+                                _uiState.value = _uiState.value.copy(showConnectionRestored = false)
+                            }
+                        }
+                        ConnectionStatus.CONNECTED
+                    }
+                    ChatWebSocketManager.ConnectionState.DISCONNECTED,
+                    ChatWebSocketManager.ConnectionState.ERROR -> {
+                        wasDisconnected = true
+                        ConnectionStatus.DISCONNECTED
+                    }
+                    ChatWebSocketManager.ConnectionState.RECONNECTING -> {
+                        wasDisconnected = true
+                        ConnectionStatus.RECONNECTING
+                    }
+                    ChatWebSocketManager.ConnectionState.CONNECTING -> ConnectionStatus.RECONNECTING
+                    ChatWebSocketManager.ConnectionState.FAILED -> {
+                        wasDisconnected = true
+                        ConnectionStatus.FAILED
+                    }
+                }
+                _uiState.value = _uiState.value.copy(connectionStatus = newStatus)
+            }
+        }
+    }
+    
+    /**
+     * 手动重试连接
+     */
+    fun retryConnection() {
+        webSocketManager.ensureConnected()
     }
     
     /**
