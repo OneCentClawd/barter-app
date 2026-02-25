@@ -36,6 +36,17 @@ public class AiReplyService {
         try {
             log.info("开始生成 AI 回复, conversationId={}, humanUserId={}", conversationId, humanUserId);
             
+            // 先发送"正在输入"状态
+            WebSocketMessage typingMessage = WebSocketMessage.builder()
+                    .type("TYPING")
+                    .conversationId(conversationId)
+                    .typing(WebSocketMessage.TypingPayload.builder()
+                            .userId(aiUserId)
+                            .nickname(aiNickname)
+                            .build())
+                    .build();
+            webSocketHandler.sendMessageToUser(humanUserId, typingMessage);
+            
             // 获取 AI 回复
             String aiReply = aiService.getAiResponse(userMessage, humanUserId);
             
@@ -65,7 +76,7 @@ public class AiReplyService {
             conversation.setLastMessageAt(LocalDateTime.now());
             conversationRepository.save(conversation);
             
-            // 通过 WebSocket 推送 AI 回复给用户
+            // 通过 WebSocket 推送 AI 回复给用户（会自动清除 typing 状态）
             WebSocketMessage wsMessage = WebSocketMessage.builder()
                     .type("NEW_MESSAGE")
                     .conversationId(conversationId)
@@ -88,6 +99,16 @@ public class AiReplyService {
             
         } catch (Exception e) {
             log.error("AI 回复生成失败", e);
+            // 发送停止输入状态
+            WebSocketMessage stopTyping = WebSocketMessage.builder()
+                    .type("STOP_TYPING")
+                    .conversationId(conversationId)
+                    .typing(WebSocketMessage.TypingPayload.builder()
+                            .userId(aiUserId)
+                            .nickname(aiNickname)
+                            .build())
+                    .build();
+            webSocketHandler.sendMessageToUser(humanUserId, stopTyping);
         }
     }
 }
