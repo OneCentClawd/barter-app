@@ -18,7 +18,8 @@ import javax.inject.Singleton
 data class WebSocketChatMessage(
     val type: String,
     val conversationId: Long,
-    val message: MessagePayload
+    val message: MessagePayload? = null,
+    val typing: TypingPayload? = null
 )
 
 data class MessagePayload(
@@ -30,6 +31,11 @@ data class MessagePayload(
     val type: String,
     val isRead: Boolean?,
     val createdAt: String?
+)
+
+data class TypingPayload(
+    val userId: Long,
+    val nickname: String?
 )
 
 @Singleton
@@ -49,6 +55,16 @@ class ChatWebSocketManager @Inject constructor(
     
     private val _connectionState = MutableSharedFlow<ConnectionState>()
     val connectionState: SharedFlow<ConnectionState> = _connectionState.asSharedFlow()
+    
+    private val _typingState = MutableSharedFlow<TypingEvent>()
+    val typingState: SharedFlow<TypingEvent> = _typingState.asSharedFlow()
+    
+    data class TypingEvent(
+        val conversationId: Long,
+        val userId: Long,
+        val nickname: String?,
+        val isTyping: Boolean
+    )
     
     enum class ConnectionState {
         CONNECTED, DISCONNECTED, CONNECTING, ERROR
@@ -79,24 +95,54 @@ class ChatWebSocketManager @Inject constructor(
                         val json = JSONObject(text)
                         val type = json.optString("type")
                         val conversationId = json.optLong("conversationId")
-                        val messageObj = json.optJSONObject("message")
                         
-                        if (messageObj != null) {
-                            val message = WebSocketChatMessage(
-                                type = type,
-                                conversationId = conversationId,
-                                message = MessagePayload(
-                                    id = messageObj.optLong("id"),
-                                    senderId = messageObj.optLong("senderId"),
-                                    senderNickname = messageObj.optString("senderNickname"),
-                                    senderAvatar = messageObj.optString("senderAvatar").takeIf { it.isNotEmpty() },
-                                    content = messageObj.optString("content"),
-                                    type = messageObj.optString("type"),
-                                    isRead = messageObj.optBoolean("isRead"),
-                                    createdAt = messageObj.optString("createdAt")
-                                )
-                            )
-                            scope.launch { _incomingMessages.emit(message) }
+                        when (type) {
+                            "NEW_MESSAGE" -> {
+                                val messageObj = json.optJSONObject("message")
+                                if (messageObj != null) {
+                                    val message = WebSocketChatMessage(
+                                        type = type,
+                                        conversationId = conversationId,
+                                        message = MessagePayload(
+                                            id = messageObj.optLong("id"),
+                                            senderId = messageObj.optLong("senderId"),
+                                            senderNickname = messageObj.optString("senderNickname"),
+                                            senderAvatar = messageObj.optString("senderAvatar").takeIf { it.isNotEmpty() },
+                                            content = messageObj.optString("content"),
+                                            type = messageObj.optString("type"),
+                                            isRead = messageObj.optBoolean("isRead"),
+                                            createdAt = messageObj.optString("createdAt")
+                                        )
+                                    )
+                                    scope.launch { _incomingMessages.emit(message) }
+                                }
+                            }
+                            "TYPING" -> {
+                                val typingObj = json.optJSONObject("typing")
+                                if (typingObj != null) {
+                                    scope.launch {
+                                        _typingState.emit(TypingEvent(
+                                            conversationId = conversationId,
+                                            userId = typingObj.optLong("userId"),
+                                            nickname = typingObj.optString("nickname"),
+                                            isTyping = true
+                                        ))
+                                    }
+                                }
+                            }
+                            "STOP_TYPING" -> {
+                                val typingObj = json.optJSONObject("typing")
+                                if (typingObj != null) {
+                                    scope.launch {
+                                        _typingState.emit(TypingEvent(
+                                            conversationId = conversationId,
+                                            userId = typingObj.optLong("userId"),
+                                            nickname = typingObj.optString("nickname"),
+                                            isTyping = false
+                                        ))
+                                    }
+                                }
+                            }
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to parse WebSocket message", e)
@@ -118,6 +164,31 @@ class ChatWebSocketManager @Inject constructor(
                 }
             })
         }
+    }
+    
+    /**
+     * 发送正在输入状态
+     */
+    fun sendTyping(targetUserId: Long, conversationId: Long, nickname: String?) {
+        val json = JSONObject().apply {
+            put("type", "TYPING")
+            put("targetUserId", targetUserId)
+            put("conversationId", conversationId)
+            put("nickname", nickname ?: "")
+        }
+        webSocket?.send(json.toString())
+    }
+    
+    /**
+     * 发送停止输入状态
+     */
+    fun sendStopTyping(targetUserId: Long, conversationId: Long) {
+        val json = JSONObject().apply {
+            put("type", "STOP_TYPING")
+            put("targetUserId", targetUserId)
+            put("conversationId", conversationId)
+        }
+        webSocket?.send(json.toString())
     }
     
     fun disconnect() {

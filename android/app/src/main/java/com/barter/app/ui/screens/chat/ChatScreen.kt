@@ -100,6 +100,23 @@ fun ChatScreen(
                         }
                     )
                 }
+                
+                // 正在输入提示
+                if (uiState.isOtherTyping) {
+                    item {
+                        Row(
+                            modifier = Modifier.padding(start = 44.dp, top = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${uiState.otherUserName ?: "对方"}正在输入...",
+                                fontSize = 12.sp,
+                                color = Color.Gray,
+                                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                            )
+                        }
+                    }
+                }
             }
 
             // 输入框
@@ -112,7 +129,14 @@ fun ChatScreen(
             ) {
                 OutlinedTextField(
                     value = messageText,
-                    onValueChange = { messageText = it },
+                    onValueChange = { newText ->
+                        messageText = newText
+                        if (newText.isNotEmpty()) {
+                            viewModel.onTyping()
+                        } else {
+                            viewModel.onStopTyping()
+                        }
+                    },
                     modifier = Modifier.weight(1f),
                     placeholder = { Text("输入消息...") },
                     maxLines = 3
@@ -121,6 +145,7 @@ fun ChatScreen(
                 IconButton(
                     onClick = {
                         if (messageText.isNotBlank()) {
+                            viewModel.onStopTyping()
                             viewModel.sendMessage(messageText)
                             messageText = ""
                         }

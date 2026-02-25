@@ -47,8 +47,36 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // 客户端可以发送心跳或其他消息，这里暂时不处理
-        log.debug("Received message: {}", message.getPayload());
+        // 处理客户端发送的消息（如 typing 状态）
+        try {
+            String payload = message.getPayload();
+            log.debug("Received message: {}", payload);
+            
+            var jsonNode = objectMapper.readTree(payload);
+            String type = jsonNode.has("type") ? jsonNode.get("type").asText() : null;
+            
+            if ("TYPING".equals(type) || "STOP_TYPING".equals(type)) {
+                Long targetUserId = jsonNode.has("targetUserId") ? jsonNode.get("targetUserId").asLong() : null;
+                Long conversationId = jsonNode.has("conversationId") ? jsonNode.get("conversationId").asLong() : null;
+                Long senderId = extractUserIdFromSession(session);
+                String senderNickname = jsonNode.has("nickname") ? jsonNode.get("nickname").asText() : null;
+                
+                if (targetUserId != null && senderId != null) {
+                    // 转发 typing 状态给对方
+                    WebSocketMessage wsMessage = WebSocketMessage.builder()
+                            .type(type)
+                            .conversationId(conversationId)
+                            .typing(WebSocketMessage.TypingPayload.builder()
+                                    .userId(senderId)
+                                    .nickname(senderNickname)
+                                    .build())
+                            .build();
+                    sendMessageToUser(targetUserId, wsMessage);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to process WebSocket message", e);
+        }
     }
 
     @Override

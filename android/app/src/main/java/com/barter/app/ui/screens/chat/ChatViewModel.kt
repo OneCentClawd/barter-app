@@ -31,7 +31,8 @@ data class ChatUiState(
     val otherUserAvatar: String? = null,
     val isLoading: Boolean = false,
     val isSending: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val isOtherTyping: Boolean = false
 )
 
 @HiltViewModel
@@ -46,6 +47,7 @@ class ChatViewModel @Inject constructor(
 
     private var conversationId: Long = 0
     private var currentUserId: Long = 0
+    private var lastTypingSent: Long = 0
     
     init {
         // 监听 WebSocket 消息
@@ -53,24 +55,56 @@ class ChatViewModel @Inject constructor(
             webSocketManager.incomingMessages.collect { wsMessage ->
                 // 只处理当前对话的消息
                 if (wsMessage.conversationId == conversationId && wsMessage.type == "NEW_MESSAGE") {
+                    val msg = wsMessage.message ?: return@collect
                     val newMessage = ChatMessage(
-                        id = wsMessage.message.id,
-                        content = wsMessage.message.content,
-                        isMe = wsMessage.message.senderId == currentUserId,
-                        senderId = wsMessage.message.senderId,
-                        senderName = wsMessage.message.senderNickname ?: "用户",
-                        senderAvatar = wsMessage.message.senderAvatar,
-                        createdAt = wsMessage.message.createdAt
+                        id = msg.id,
+                        content = msg.content,
+                        isMe = msg.senderId == currentUserId,
+                        senderId = msg.senderId,
+                        senderName = msg.senderNickname ?: "用户",
+                        senderAvatar = msg.senderAvatar,
+                        createdAt = msg.createdAt
                     )
                     // 避免重复添加
                     if (_uiState.value.messages.none { it.id == newMessage.id }) {
                         _uiState.value = _uiState.value.copy(
-                            messages = _uiState.value.messages + newMessage
+                            messages = _uiState.value.messages + newMessage,
+                            isOtherTyping = false // 收到消息时清除输入状态
                         )
                     }
                 }
             }
         }
+        
+        // 监听 typing 状态
+        viewModelScope.launch {
+            webSocketManager.typingState.collect { event ->
+                if (event.conversationId == conversationId && event.userId != currentUserId) {
+                    _uiState.value = _uiState.value.copy(isOtherTyping = event.isTyping)
+                }
+            }
+        }
+    }
+    
+    /**
+     * 用户正在输入时调用
+     */
+    fun onTyping() {
+        val receiverId = _uiState.value.otherUserId ?: return
+        val now = System.currentTimeMillis()
+        // 每 2 秒最多发送一次 typing 状态
+        if (now - lastTypingSent > 2000) {
+            lastTypingSent = now
+            webSocketManager.sendTyping(receiverId, conversationId, null)
+        }
+    }
+    
+    /**
+     * 用户停止输入时调用
+     */
+    fun onStopTyping() {
+        val receiverId = _uiState.value.otherUserId ?: return
+        webSocketManager.sendStopTyping(receiverId, conversationId)
     }
 
     fun loadConversation(conversationId: Long) {

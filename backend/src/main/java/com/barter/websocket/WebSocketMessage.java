@@ -11,9 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class WebSocketMessage {
     
-    private String type; // "NEW_MESSAGE", "MESSAGE_READ", etc.
+    // 消息类型: NEW_MESSAGE, MESSAGE_READ, TYPING, STOP_TYPING
+    private String type;
     private Long conversationId;
     private MessagePayload message;
+    private TypingPayload typing;
     
     @Data
     @Builder
@@ -28,5 +30,14 @@ public class WebSocketMessage {
         private String type;
         private Boolean isRead;
         private String createdAt;
+    }
+    
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TypingPayload {
+        private Long userId;
+        private String nickname;
     }
 }
