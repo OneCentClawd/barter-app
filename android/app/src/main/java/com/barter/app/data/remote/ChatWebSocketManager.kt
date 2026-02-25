@@ -60,8 +60,9 @@ class ChatWebSocketManager @Inject constructor(
             
             _connectionState.emit(ConnectionState.CONNECTING)
             
-            // TODO: 替换成实际的服务器地址
-            val baseUrl = "ws://150.109.72.152:9527"
+            // 从 BuildConfig 获取 API 地址，替换 http 为 ws
+            val httpUrl = com.barter.app.BuildConfig.API_BASE_URL.trimEnd('/')
+            val baseUrl = httpUrl.replace("http://", "ws://").replace("https://", "wss://")
             val request = Request.Builder()
                 .url("$baseUrl/ws/chat?token=$token")
                 .build()
