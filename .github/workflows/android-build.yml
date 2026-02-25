@@ -8,6 +8,9 @@ on:
       - '.github/workflows/android-build.yml'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -44,9 +47,31 @@ jobs:
         working-directory: ./android
         run: ./gradlew assembleDebug
       
-      - name: Upload APK
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: barter-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 7
+      
+      - name: Rename APK with commit hash
+        run: |
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          mv android/app/build/outputs/apk/debug/app-debug.apk barter-debug-${SHORT_SHA}.apk
+          echo "APK_NAME=barter-debug-${SHORT_SHA}.apk" >> $GITHUB_ENV
+          echo "SHORT_SHA=${SHORT_SHA}" >> $GITHUB_ENV
+      
+      - name: Create/Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest Debug Build
+          body: |
+            🤖 自动构建的 Debug APK
+            
+            **Commit:** ${{ github.sha }}
+            **分支:** ${{ github.ref_name }}
+            **时间:** ${{ github.event.head_commit.timestamp }}
+            **提交信息:** ${{ github.event.head_commit.message }}
+          files: ${{ env.APK_NAME }}
+          prerelease: true

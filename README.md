@@ -2,6 +2,10 @@
 
 以物易物交换平台，让闲置物品流动起来。
 
+## 📥 下载
+
+[**点击下载最新 Debug APK**](https://github.com/OneCentClawd/barter-app/releases/tag/latest)
+
 ## 项目结构
 
 ```
