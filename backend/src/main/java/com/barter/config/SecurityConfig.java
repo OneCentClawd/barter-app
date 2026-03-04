@@ -37,6 +37,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/items/list").permitAll()
                 .requestMatchers("/api/items/{id}").permitAll()
                 .requestMatchers("/api/items/search").permitAll()
+                .requestMatchers("/api/divination/**").permitAll()  // 卜卦接口
                 .requestMatchers("/uploads/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .requestMatchers("/ws/**").permitAll()  // WebSocket 端点
