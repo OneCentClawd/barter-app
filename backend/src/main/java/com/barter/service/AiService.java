@@ -67,9 +67,9 @@ public class AiService {
             headers.setBearerAuth(gatewayToken);
 
             // 构建请求体
+            // 不传 user 字段，让每次请求都是无状态的，不保留 session
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", "clawdbot:main");
-            requestBody.put("user", "barter-user-" + userId); // 用于会话保持
             
             List<Map<String, String>> messages = new ArrayList<>();
             
