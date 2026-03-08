@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 
 import java.util.*;
 
@@ -28,8 +29,16 @@ public class AiService {
     @Value("${ai.gateway.token}")
     private String gatewayToken;
     
-    private final RestTemplate restTemplate = new RestTemplate();
+    // 设置 400 秒超时（AI 回复可能很慢）
+    private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    
+    public AiService() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(30_000);  // 连接超时 30 秒
+        factory.setReadTimeout(400_000);    // 读取超时 400 秒
+        this.restTemplate = new RestTemplate(factory);
+    }
 
     /**
      * 判断用户ID是否是AI用户
